@@ -4,6 +4,7 @@
 
 
 /*** BEGIN Constants ***/
+// XXX TODO XXX Add constants not folded into subsystem classes
 /*** FINISH Constants ***/
 
 
