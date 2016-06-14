@@ -1,9 +1,29 @@
 /*** control.ino
- *      Master control for the genie lamp project
+        Master control for the genie lamp project
  ***/
 
 
 /*** BEGIN Constants ***/
+#ifdef DEBUG
+  #define DEBUG_SERIAL(x)  Serial.begin(x)
+  #define DEBUG_PRINT(x)  Serial.print (x)
+  #define DEBUG_PRINTLN(x)  Serial.println (x)
+#else
+  #define DEBUG_SERIAL(x)
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+#endif
+/*not sure where to put these to make them in scope, so I added them here to test.*/
+/*Needed for baseline and readings*/
+const int pins = 6;
+int touchPin[pins] = {0, 1, 15, 16, 17, 18};
+/*Needed for readings*/
+int sensitivity = 400;
+int read1[pins];
+long firstRead[pins];
+/*needed for baseline*/
+int base[pins];
+long lastBase[pins];
 // XXX TODO XXX Add constants not folded into subsystem classes
 /*** FINISH Constants ***/
 
@@ -15,105 +35,153 @@
 
 // XXX TODO XXX Add to the appropriate specific files
 /*** BEGIN Modules Interfaces***/
-  /** BEGIN Modules Declarations ***/
+/** BEGIN Modules Declarations ***/
 class ModuleBase
 {
-    public:
-        virtual void setup() = 0;
-        virtual void initialize() = 0;
+  public:
+    virtual void setup() = 0;
+    virtual void initialize() = 0;
 };
 
-    /** BEGIN Input Modules Declarations ***/
+/** BEGIN Input Modules Declarations ***/
 class InputBase : public ModuleBase
 {
-    public:
-        virtual int touched_time() = 0;
+  public:
+    virtual long touched_time() = 0;
 };
 
 class Touch : public InputBase
 {
-    public:
-        virtual void setup();
-        virtual void initialize();
-        virtual int touched_time();
-    private:
-        int _touched_millis = 0;
+  public:
+    virtual void setup();
+    virtual void initialize();
+    virtual long touched_time();
+  private:
+    long _touched_millis = 0;
 };
-    /** FINISH Input Modules Declarations ***/
+/** FINISH Input Modules Declarations ***/
 
-    /** BEGIN Output Modules Declarations ***/
+/** BEGIN Output Modules Declarations ***/
 class OutputBase : public ModuleBase
 {
-    public:
-        virtual void off() = 0;
-        virtual void display(int millis) = 0;
+  public:
+    virtual void off() = 0;
+    virtual void display(int millis) = 0;
 };
 
 class Poofer : public OutputBase
 {
-    public:
-        virtual void setup();
-        virtual void initialize();
-        virtual void off();
-        virtual void display(int millis);
+  public:
+    virtual void setup();
+    virtual void initialize();
+    virtual void off();
+    virtual void display(int millis);
 };
 
 class BodyLEDs : public OutputBase
 {
-    public:
-        virtual void setup();
-        virtual void initialize();
-        virtual void off();
-        virtual void display(int millis);
+  public:
+    virtual void setup();
+    virtual void initialize();
+    virtual void off();
+    virtual void display(int millis);
 };
-    /** BEGIN Output Modules Declarations ***/
-  /** FINISH Modules Declarations ***/
-    
-  /** BEGIN Modules Definitions ***/
-    /** BEGIN Touch Modules Definitions ***/
-    void Touch::setup() {
-        0;      // XXX TODO XXX
-    }
-    void Touch::initialize() {
-        0;      // XXX TODO XXX
-    }
-    int Touch::touched_time() {
-        return 0;      // XXX TODO XXX
-    }
-    /** FINISH Touch Modules Definitions ***/
+/** BEGIN Output Modules Declarations ***/
+/** FINISH Modules Declarations ***/
 
-    /** BEGIN Poofer Modules Definitions ***/
-    void Poofer::setup() {
-        0;      // XXX TODO XXX
+/** BEGIN Modules Definitions ***/
+/** BEGIN Touch Modules Definitions ***/
+void Touch::setup() {
+  //takes a baseline reading for the sensor.
+  int bpin;
+  DEBUG_SERIAL(38400);
+  for (bpin = 0; bpin < pins; bpin++) {
+    base[bpin] = touchRead(touchPin[bpin]); // Baseline calibration
+    lastBase[bpin] = millis();
+    Serial.println(base[bpin]);
+  }
+}
+void Touch::initialize() {
+}
+long Touch::touched_time() {
+  //#define DEBUG
+  //returns a long from the sensor that has been touched for the longest time. l with the duration of the touch  consecutively for the longest time.
+  int readPin;
+  long result;
+  result = 0;
+  long readTime[pins] = {0};
+  long timeDiff[pins] = {0};
+  for (readPin = 0; readPin < pins; readPin++) {
+    String sensorNum = readPin;
+    int Difference = read1[readPin] - base[readPin];
+    readTime[readPin] = millis();
+    timeDiff[readPin] = readTime[readPin] - firstRead[readPin];
+    read1[readPin] = touchRead(touchPin[readPin]);
+    if (Difference > sensitivity && firstRead[readPin] == 0) {
+      firstRead[readPin] = readTime[readPin];
     }
-    void Poofer::initialize() {
-        0;      // XXX TODO XXX
+    else if (Difference > sensitivity && timeDiff[readPin] <= 20000) {
+      //If a single pin has been on for more than two seconds, set it to 0
+      firstRead[readPin] = 0;
     }
-    void Poofer::off() {
-        0;      // XXX TODO XXX
+    else if (Difference > sensitivity && timeDiff[readPin] >= 5) {
+      //If the difference is more than sensativity and the millis of the current read is .005 seconds greater than the first touch read.
+      if (timeDiff[readPin] > result) {
+        result = timeDiff[readPin];
+        DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(sensitivity); DEBUG_PRINTLN();
+      };
     }
-    void Poofer::display(int millis) {
-        0;      // XXX TODO XXX
+    /**   begin sense any touch
+          else if (Difference > sensitivity && firstRead[readPin] != 0) {
+         if (timeDiff[readPin] > result) {
+           result = timeDiff[readPin];
+         };
+             }
+         end sense any touch **/
+    else {
+      firstRead[readPin] = 0;
     }
-    /** FINISH Poofer Modules Definitions ***/
+  }
+  if (result != 0) {
+    return result;
+  } else {
+    return false;
+  }
+}
+/** FINISH Touch Modules Definitions ***/
 
-    /** BEGIN BodyLEDs Modules Definitions ***/
-    void BodyLEDs::setup() {
-        0;      // XXX TODO XXX
-    }
-    void BodyLEDs::initialize() {
-        0;      // XXX TODO XXX
-    }
-    void BodyLEDs::off() {
-        0;      // XXX TODO XXX
-    }
-    void BodyLEDs::display(int millis) {
-        0;      // XXX TODO XXX
-    }
-    /** FINISH BodyLEDs Modules Definitions ***/
-    /** FINISH Touch Modules Definitions ***/
+/** BEGIN Poofer Modules Definitions ***/
+void Poofer::setup() {
+  0;      // XXX TODO XXX
+}
+void Poofer::initialize() {
+  0;      // XXX TODO XXX
+}
+void Poofer::off() {
+  0;      // XXX TODO XXX
+}
+void Poofer::display(int millis) {
+  0;      // XXX TODO XXX
+}
+/** FINISH Poofer Modules Definitions ***/
 
-  /** FINISH Modules Definitions ***/
+/** BEGIN BodyLEDs Modules Definitions ***/
+void BodyLEDs::setup() {
+  0;      // XXX TODO XXX
+}
+void BodyLEDs::initialize() {
+  0;      // XXX TODO XXX
+}
+void BodyLEDs::off() {
+  0;      // XXX TODO XXX
+}
+void BodyLEDs::display(int millis) {
+  0;      // XXX TODO XXX
+}
+/** FINISH BodyLEDs Modules Definitions ***/
+/** FINISH Touch Modules Definitions ***/
+
+/** FINISH Modules Definitions ***/
 /*** FINISH Modules Interfaces***/
 
 
@@ -130,13 +198,13 @@ BodyLEDs* bodyLEDs;
 
 /*** BEGIN Setup Routine ***/
 void setup() {
-    touch = new Touch();
-    poofer = new Poofer();
-    bodyLEDs = new BodyLEDs();
+  touch = new Touch();
+  poofer = new Poofer();
+  bodyLEDs = new BodyLEDs();
 
-    touch->setup();
-    poofer->setup();
-    bodyLEDs->setup();
+  touch->setup();
+  poofer->setup();
+  bodyLEDs->setup();
 }
 /*** FINISH Setup Routine ***/
 
@@ -145,25 +213,25 @@ void setup() {
 
 /*** BEGIN Main operation entry point ***/
 void loop() {
-    // Initialize
-    touch->initialize();
-    poofer->initialize();
-    bodyLEDs->initialize();
-    
+  // Initialize
+  touch->initialize();
+  poofer->initialize();
+  bodyLEDs->initialize();
 
-    // Main operational loop
-    int touched_millis;
-    while (true) {
-        touched_millis = touch->touched_time();
-        if (!touched_millis) {
-            poofer->off();
-            bodyLEDs->off();
-        } else {
-            // XXX TODO XXX See if we should progress to the next output stage
-            poofer->display(touched_millis);
-            bodyLEDs->display(touched_millis);
-        }
+
+  // Main operational loop
+  long touched_millis;
+  while (true) {
+    touched_millis = touch->touched_time();
+    if (!touched_millis) {
+      poofer->off();
+      bodyLEDs->off();
+    } else {
+      // XXX TODO XXX See if we should progress to the next output stage
+      poofer->display(touched_millis);
+      bodyLEDs->display(touched_millis);
     }
+  }
 
 }
 /*** FINISH Main operation entry point ***/
