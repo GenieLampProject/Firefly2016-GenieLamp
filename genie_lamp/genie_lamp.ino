@@ -17,7 +17,7 @@
 
 /*** BEGIN Setup Routine ***/
 void setup() {
-    TouchSense.setup();
+    Touch.setup();
     Poofer.setup();
     BodyLEDs.setup();
 }
@@ -29,15 +29,15 @@ void setup() {
 /*** BEGIN Main operation entry point ***/
 void loop() {
     // Initialize
-    TouchSense.initialize();
+    Touch.initialize();
     Poofer.initialize();
     BodyLEDs.initialize();
     
 
     // Main operational loop
-    int touched_seconds;
+    int touched_millis;
     while (true) {
-        touched_millis = TouchSense.touched_time();
+        touched_millis = Touch.touched_time();
         if (!touched_millis) {
             Poofer.off();
             BodyLEDs.off();
