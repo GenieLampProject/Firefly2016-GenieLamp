@@ -23,6 +23,7 @@ class ModuleBase
         virtual void initialize() = 0;
 };
 
+    /** BEGIN Input Modules Declarations ***/
 class InputBase : public ModuleBase
 {
     public:
@@ -38,7 +39,9 @@ class Touch : public InputBase
     private:
         int _touched_millis = 0;
 };
+    /** FINISH Input Modules Declarations ***/
 
+    /** BEGIN Output Modules Declarations ***/
 class OutputBase : public ModuleBase
 {
     public:
@@ -63,6 +66,7 @@ class BodyLEDs : public OutputBase
         virtual void off();
         virtual void display(int millis);
 };
+    /** BEGIN Output Modules Declarations ***/
   /** FINISH Modules Declarations ***/
     
   /** BEGIN Modules Definitions ***/
