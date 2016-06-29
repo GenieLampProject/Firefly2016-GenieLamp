@@ -1,9 +1,9 @@
-const int pins = 2;
-int touchPin[pins] = {0, 1};
+const int pins = 3;
+int touchPin[pins] = {16, 17, 18};
 boolean touched = false;
 //int potPin = A0;
 int ledPin = 13; //LED conectado ao pino digital 13
-int sensitivity = 400;
+int sensitivity = 600;
 int spark = 2;
 int read1[pins], base[pins];
 int column, row, c;
@@ -26,6 +26,7 @@ digitalWrite(spark, LOW);
 digitalWrite (ledPin, LOW);
 touched = false;
   for (c=0; c<pins; c++) {
+    //Serial.println(base[c]);
      read1[c] = touchRead(touchPin[c]);
      //Serial.println(read1[c]-base[c]);
      int Difference = read1[c]-base[c];
@@ -47,8 +48,8 @@ touched = false;
          Serial.print(" Threshold: "); // print a space
          Serial.print(sensitivity);
          Serial.println();
-       digitalWrite(spark, HIGH);
-       digitalWrite (ledPin, HIGH);
+       //digitalWrite(spark, HIGH);
+    //   digitalWrite (ledPin, HIGH);
        delay(400);
        }
   }
