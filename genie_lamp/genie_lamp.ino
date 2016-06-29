@@ -13,6 +13,27 @@
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINTLN(x)
 #endif
+//FastLED stuff
+#include "FastLED.h"
+#define LEFT_PIN    22
+#define RIGHT_PIN    21
+#define LED_TYPE    WS2812
+#define COLOR_ORDER RGB
+#define LEFT_NUM_LEDS    200
+#define RIGHT_NUM_LEDS    200
+
+CRGB left[LEFT_NUM_LEDS];
+CRGB right[RIGHT_NUM_LEDS];
+
+#define BRIGHTNESS          50
+#define FRAMES_PER_SECOND  120
+
+uint8_t brightness = 0;
+uint8_t gHue = 0; // rotating "base color" used by many of the patterns
+int timeTarget = 10000;
+long timeCalled = 0;
+long timeEnd = 0;
+
 /*not sure where to put these to make them in scope, so I added them here to test.*/
 /*Needed for baseline and readings*/
 const int pins = 6;
@@ -66,7 +87,7 @@ class OutputBase : public ModuleBase
 {
   public:
     virtual void off() = 0;
-    virtual void display(int millis) = 0;
+    virtual void display(long millis) = 0;
 };
 
 class Poofer : public OutputBase
@@ -75,7 +96,7 @@ class Poofer : public OutputBase
     virtual void setup();
     virtual void initialize();
     virtual void off();
-    virtual void display(int millis);
+    virtual void display(long millis);
 };
 
 class BodyLEDs : public OutputBase
@@ -84,7 +105,7 @@ class BodyLEDs : public OutputBase
     virtual void setup();
     virtual void initialize();
     virtual void off();
-    virtual void display(int millis);
+    virtual void display(long millis);
 };
 /** BEGIN Output Modules Declarations ***/
 /** FINISH Modules Declarations ***/
@@ -108,6 +129,8 @@ long Touch::touched_time() {
   //returns a long from the sensor that has been touched for the longest time. l with the duration of the touch  consecutively for the longest time.
   int readPin;
   long result;
+  long minRead;
+  long totalTime;
   result = 0;
   long readTime[pins] = {0};
   long timeDiff[pins] = {0};
@@ -119,6 +142,10 @@ long Touch::touched_time() {
     read1[readPin] = touchRead(touchPin[readPin]);
     if (Difference > sensitivity && firstRead[readPin] == 0) {
       firstRead[readPin] = readTime[readPin];
+      if (firstRead[readPin] < minRead ) {
+        minRead = firstRead[readPin];
+        DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(sensitivity); DEBUG_PRINTLN();
+      }
     }
     else if (Difference > sensitivity && timeDiff[readPin] <= 20000) {
       //If a single pin has been on for more than two seconds, set it to 0
@@ -143,7 +170,8 @@ long Touch::touched_time() {
     }
   }
   if (result != 0) {
-    return result;
+    totalTime = totalTime - millis();
+    return totalTime;
   } else {
     return false;
   }
@@ -158,25 +186,42 @@ void Poofer::initialize() {
   0;      // XXX TODO XXX
 }
 void Poofer::off() {
-  0;      // XXX TODO XXX
+  ;      // XXX TODO XXX
 }
-void Poofer::display(int millis) {
+void Poofer::display(long millis) {
   0;      // XXX TODO XXX
 }
 /** FINISH Poofer Modules Definitions ***/
 
 /** BEGIN BodyLEDs Modules Definitions ***/
 void BodyLEDs::setup() {
-  0;      // XXX TODO XXX
+   // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,LEFT_PIN,COLOR_ORDER>(left, LEFT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,RIGHT_PIN,COLOR_ORDER>(right, RIGHT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
 }
 void BodyLEDs::initialize() {
-  0;      // XXX TODO XXX
+  timeCalled = millis();
 }
 void BodyLEDs::off() {
-  0;      // XXX TODO XXX
+  FastLED.clear();
+  // turn leds off
+  timeCalled = 0;      // XXX TODO XXX
 }
-void BodyLEDs::display(int millis) {
-  0;      // XXX TODO XXX
+void BodyLEDs::display(long millis) {
+  long brightCalc = constrain(map(millis, timeCalled, timeEnd, 0, 255), 0, 255);
+  for(int i = 0; i < LEFT_NUM_LEDS; i++ )
+   {
+   left[i].setRGB(0,255,0);  // setRGB functions works by setting
+    right[i].setRGB(0,255,0);
+  }
+    FastLED.setBrightness(brightCalc);
+    if (brightCalc == 255) {
+      return;
+}
 }
 /** FINISH BodyLEDs Modules Definitions ***/
 /** FINISH Touch Modules Definitions ***/
