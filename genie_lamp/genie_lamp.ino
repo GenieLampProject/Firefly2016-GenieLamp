@@ -3,10 +3,10 @@
  ***/
 
 
-#include "FastLED.h"
+#include <FastLED.h>
 
 
-/*** BEGIN Constants ***/
+/*** BEGIN Macros ***/
 // XXX QUESTION XXX Make runtime changeable?
 #ifdef DEBUG
   #define DEBUG_SERIAL(x)  Serial.begin(x)
@@ -17,10 +17,16 @@
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINTLN(x)
 #endif
+/*** FINISH Macros ***/
+
+
+/*** BEGIN Constants ***/
+#define LED_TYPE     WS2812
+#define COLOR_ORDER RGB
 /*** FINISH Constants ***/
 
 
-// XXX TODO XXX Add to the appropriate specific files
+// XXX TODO XXX Add to the appropriate specific .h/.cpp files
 /*** BEGIN Modules Interfaces***/
   /** BEGIN Modules Declarations ***/
 class ModuleBase
@@ -44,8 +50,9 @@ class Touch : public InputBase
         virtual void initialize();
         virtual long touched_time();
     private:
+        static const int pins = 6;
+
         long _touched_millis = 0;
-        const int pins = 6;
         int touchPin[pins] = {0, 1, 15, 16, 17, 18};
         /*Needed for readings*/
         int sensitivity = 400;
@@ -86,8 +93,6 @@ class BodyLEDs : public OutputBase
 
         static const int LEFT_PIN = 22;
         static const int RIGHT_PIN = 21;
-        static const int LED_TYPE = WS2812;
-        static const int COLOR_ORDER = RGB;
         static const int LEFT_NUM_LEDS = 200;
         static const int RIGHT_NUM_LEDS = 200;
 
@@ -106,7 +111,6 @@ class BodyLEDs : public OutputBase
         //takes a baseline reading for the sensor.
         DEBUG_SERIAL(38400);
         for (int bpin = 0; bpin < this->pins; bpin++) {
-            bpin = 0; bpin < this->pins; bpin++) {
             this->base[bpin] = touchRead(this->touchPin[bpin]); // Baseline calibration
             this->lastBase[bpin] = millis();
             DEBUG_PRINTLN(this->base[bpin]);
@@ -126,7 +130,6 @@ class BodyLEDs : public OutputBase
         long readTime[this->pins] = {0};
         long timeDiff[this->pins] = {0};
         for (readPin = 0; readPin < this->pins; readPin++) {
-            String sensorNum = readPin;
             int Difference = this->read1[readPin] - this->base[readPin];
             readTime[readPin] = millis();
             timeDiff[readPin] = readTime[readPin] - this->firstRead[readPin];
@@ -185,9 +188,9 @@ class BodyLEDs : public OutputBase
     /** BEGIN BodyLEDs Modules Definitions ***/
     void BodyLEDs::setup() {
         // tell FastLED about the LED strip configuration
-        FastLED.addLeds<this->LED_TYPE, this->LEFT_PIN, this->COLOR_ORDER>(this->left, this->LEFT_NUM_LEDS).setCorrection(TypicalLEDStrip);
-        FastLED.addLeds<this->LED_TYPE, this->RIGHT_PIN, this->COLOR_ORDER>(this->right, this->RIGHT_NUM_LEDS).setCorrection(TypicalLEDStrip);
-        //FastLED.addLeds<this->LED_TYPE, DATA_PIN, CLK_PIN, this->COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+        FastLED.addLeds<LED_TYPE, LEFT_PIN, COLOR_ORDER>(this->left, this->LEFT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+        FastLED.addLeds<LED_TYPE, RIGHT_PIN, COLOR_ORDER>(this->right, this->RIGHT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+        //FastLED.addLeds<LED_TYPE, DATA_PIN, CLK_PIN, this->COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
         // set master brightness control
         FastLED.setBrightness(this->BRIGHTNESS);
