@@ -3,7 +3,11 @@
  ***/
 
 
+#include "FastLED.h"
+
+
 /*** BEGIN Constants ***/
+// XXX QUESTION XXX Make runtime changeable?
 #ifdef DEBUG
   #define DEBUG_SERIAL(x)  Serial.begin(x)
   #define DEBUG_PRINT(x)  Serial.print (x)
@@ -13,39 +17,6 @@
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINTLN(x)
 #endif
-//FastLED stuff
-#include "FastLED.h"
-#define LEFT_PIN    22
-#define RIGHT_PIN    21
-#define LED_TYPE    WS2812
-#define COLOR_ORDER RGB
-#define LEFT_NUM_LEDS    200
-#define RIGHT_NUM_LEDS    200
-
-CRGB left[LEFT_NUM_LEDS];
-CRGB right[RIGHT_NUM_LEDS];
-
-#define BRIGHTNESS          50
-#define FRAMES_PER_SECOND  120
-
-uint8_t brightness = 0;
-uint8_t gHue = 0; // rotating "base color" used by many of the patterns
-int timeTarget = 10000;
-long timeCalled = 0;
-long timeEnd = 0;
-
-/*not sure where to put these to make them in scope, so I added them here to test.*/
-/*Needed for baseline and readings*/
-const int pins = 6;
-int touchPin[pins] = {0, 1, 15, 16, 17, 18};
-/*Needed for readings*/
-int sensitivity = 400;
-int read1[pins];
-long firstRead[pins];
-/*needed for baseline*/
-int base[pins];
-long lastBase[pins];
-// XXX TODO XXX Add constants not folded into subsystem classes
 /*** FINISH Constants ***/
 
 
@@ -74,6 +45,15 @@ class Touch : public InputBase
         virtual long touched_time();
     private:
         long _touched_millis = 0;
+        const int pins = 6;
+        int touchPin[pins] = {0, 1, 15, 16, 17, 18};
+        /*Needed for readings*/
+        int sensitivity = 400;
+        int read1[pins];
+        long firstRead[pins];
+        /*needed for baseline*/
+        int base[pins];
+        long lastBase[pins];
 };
     /** FINISH Input Modules Declarations ***/
 
@@ -101,6 +81,20 @@ class BodyLEDs : public OutputBase
         virtual void initialize();
         virtual void off();
         virtual void display(long millis);
+    private:
+        static const int BRIGHTNESS = 50;
+
+        static const int LEFT_PIN = 22;
+        static const int RIGHT_PIN = 21;
+        static const int LED_TYPE = WS2812;
+        static const int COLOR_ORDER = RGB;
+        static const int LEFT_NUM_LEDS = 200;
+        static const int RIGHT_NUM_LEDS = 200;
+
+        CRGB left[LEFT_NUM_LEDS];
+        CRGB right[RIGHT_NUM_LEDS];
+        long timeCalled = 0;
+        long timeEnd = 0;
 };
     /** BEGIN Output Modules Declarations ***/
   /** FINISH Modules Declarations ***/
@@ -110,15 +104,16 @@ class BodyLEDs : public OutputBase
     /** BEGIN Touch Modules Definitions ***/
     void Touch::setup() {
         //takes a baseline reading for the sensor.
-        int bpin;
         DEBUG_SERIAL(38400);
-        for (bpin = 0; bpin < pins; bpin++) {
-            base[bpin] = touchRead(touchPin[bpin]); // Baseline calibration
-            lastBase[bpin] = millis();
-            Serial.println(base[bpin]);
+        for (int bpin = 0; bpin < this->pins; bpin++) {
+            bpin = 0; bpin < this->pins; bpin++) {
+            this->base[bpin] = touchRead(this->touchPin[bpin]); // Baseline calibration
+            this->lastBase[bpin] = millis();
+            DEBUG_PRINTLN(this->base[bpin]);
         }
     }
     void Touch::initialize() {
+        0;      // XXX TODO XXX
     }
     long Touch::touched_time() {
         //#define DEBUG
@@ -128,39 +123,39 @@ class BodyLEDs : public OutputBase
         long minRead;
         long totalTime;
         result = 0;
-        long readTime[pins] = {0};
-        long timeDiff[pins] = {0};
-        for (readPin = 0; readPin < pins; readPin++) {
+        long readTime[this->pins] = {0};
+        long timeDiff[this->pins] = {0};
+        for (readPin = 0; readPin < this->pins; readPin++) {
             String sensorNum = readPin;
-            int Difference = read1[readPin] - base[readPin];
+            int Difference = this->read1[readPin] - this->base[readPin];
             readTime[readPin] = millis();
-            timeDiff[readPin] = readTime[readPin] - firstRead[readPin];
-            read1[readPin] = touchRead(touchPin[readPin]);
-            if (Difference > sensitivity && firstRead[readPin] == 0) {
-                firstRead[readPin] = readTime[readPin];
-                if (firstRead[readPin] < minRead ) {
-                    minRead = firstRead[readPin];
-                    DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(sensitivity); DEBUG_PRINTLN();
+            timeDiff[readPin] = readTime[readPin] - this->firstRead[readPin];
+            this->read1[readPin] = touchRead(this->touchPin[readPin]);
+            if (Difference > this->sensitivity && this->firstRead[readPin] == 0) {
+                this->firstRead[readPin] = readTime[readPin];
+                if (this->firstRead[readPin] < minRead) {
+                    minRead = this->firstRead[readPin];
+                    DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(this->base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(this->read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(this->sensitivity); DEBUG_PRINTLN();
                 }
-            } else if (Difference > sensitivity && timeDiff[readPin] <= 20000) {
+            } else if (Difference > this->sensitivity && timeDiff[readPin] <= 20000) {
                 //If a single pin has been on for more than two seconds, set it to 0
-                firstRead[readPin] = 0;
-            } else if (Difference > sensitivity && timeDiff[readPin] >= 5) {
+                this->firstRead[readPin] = 0;
+            } else if (Difference > this->sensitivity && timeDiff[readPin] >= 5) {
                 //If the difference is more than sensativity and the millis of the current read is .005 seconds greater than the first touch read.
                 if (timeDiff[readPin] > result) {
                     result = timeDiff[readPin];
-                    DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(sensitivity); DEBUG_PRINTLN();
+                    DEBUG_PRINT(" on for: "); DEBUG_PRINT(timeDiff[readPin]); DEBUG_PRINT(" Baseval: "); DEBUG_PRINT(this->base[readPin]); DEBUG_PRINT("  Read: "); DEBUG_PRINT(this->read1[readPin]); DEBUG_PRINT(" BL diff: "); DEBUG_PRINT(Difference); DEBUG_PRINT(" Threshold: "); DEBUG_PRINT(this->sensitivity); DEBUG_PRINTLN();
                 }
             }
             /**   begin sense any touch
-            else if (Difference > sensitivity && firstRead[readPin] != 0) {
+            else if (Difference > this->sensitivity && this->firstRead[readPin] != 0) {
                 if (timeDiff[readPin] > result) {
                    result = timeDiff[readPin];
                  };
             }
             end sense any touch **/
             else {
-                firstRead[readPin] = 0;
+                this->firstRead[readPin] = 0;
             }
         }
         if (result != 0) {
@@ -190,27 +185,27 @@ class BodyLEDs : public OutputBase
     /** BEGIN BodyLEDs Modules Definitions ***/
     void BodyLEDs::setup() {
         // tell FastLED about the LED strip configuration
-        FastLED.addLeds<LED_TYPE,LEFT_PIN,COLOR_ORDER>(left, LEFT_NUM_LEDS).setCorrection(TypicalLEDStrip);
-        FastLED.addLeds<LED_TYPE,RIGHT_PIN,COLOR_ORDER>(right, RIGHT_NUM_LEDS).setCorrection(TypicalLEDStrip);
-        //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+        FastLED.addLeds<this->LED_TYPE, this->LEFT_PIN, this->COLOR_ORDER>(this->left, this->LEFT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+        FastLED.addLeds<this->LED_TYPE, this->RIGHT_PIN, this->COLOR_ORDER>(this->right, this->RIGHT_NUM_LEDS).setCorrection(TypicalLEDStrip);
+        //FastLED.addLeds<this->LED_TYPE, DATA_PIN, CLK_PIN, this->COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
         // set master brightness control
-        FastLED.setBrightness(BRIGHTNESS);
+        FastLED.setBrightness(this->BRIGHTNESS);
     }
     void BodyLEDs::initialize() {
-        timeCalled = millis();
+        this->timeCalled = millis();    // XXX QUESTION XXX What does "timeCalled" do? Shouldn't it always be 0?
     }
     void BodyLEDs::off() {
         FastLED.clear();
         // turn leds off
-        timeCalled = 0;      // XXX TODO XXX
+        this->timeCalled = 0;      // XXX TODO XXX    // XXX QUESTION XXX What does "timeCalled" do? Shouldn't it always be 0?
     }
     void BodyLEDs::display(long millis) {
-        long brightCalc = constrain(map(millis, timeCalled, timeEnd, 0, 255), 0, 255);
-        for(int i = 0; i < LEFT_NUM_LEDS; i++)
+        long brightCalc = constrain(map(millis, this->timeCalled, this->timeEnd, 0, 255), 0, 255);    // XXX QUESTION XXX What does "timeCalled"/"timeEnnd" do? Shouldn't they always be 0 with this code?
+        for(int i = 0; i < this->LEFT_NUM_LEDS; i++)
         {
-            left[i].setRGB(0,255,0);  // setRGB functions works by setting
-            right[i].setRGB(0,255,0);
+            this->left[i].setRGB(0, 255, 0);  // setRGB functions works by setting
+            this->right[i].setRGB(0, 255, 0);
         }
         FastLED.setBrightness(brightCalc);
         if (brightCalc == 255) {
