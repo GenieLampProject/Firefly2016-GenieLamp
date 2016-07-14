@@ -263,6 +263,10 @@ void loop() {
         if (!touched_millis) {
             poofer->off();
             bodyLEDs->off();
+            touch->initialize();
+            poofer->initialize();
+            bodyLEDs->initialize();
+
         } else {
             // XXX TODO XXX See if we should progress to the next output stage
             poofer->display(touched_millis);
