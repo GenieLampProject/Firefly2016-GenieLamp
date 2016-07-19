@@ -23,8 +23,11 @@
 /*** BEGIN Constants ***/
 //Genie Lamp Stuff
 #define PILOT_PIN 3
-#define POOFER_PIN 6
-#define SPARKER_PIN 4
+//RED
+#define POOFER_PIN 4
+//blue
+#define SPARKER_PIN 5
+//White LED
 /* for original layout NOT FOR FF
  * #define PILOT_PIN 3
 #define POOFER_PIN 4
@@ -83,7 +86,7 @@ int confidence = 0;
 const int pins = TOUCH_TOTAL_PINS;
 const int touchPin[pins] = {TOUCH_LEFT_FRONT_PIN, TOUCH_LEFT_MIDDLE_PIN, TOUCH_LEFT_BACK_PIN, TOUCH_RIGHT_FRONT_PIN, TOUCH_RIGHT_MIDDLE_PIN, TOUCH_RIGHT_BACK_PIN};
 /*Needed for readings*/
-const int sensitivity = 600;
+const int sensitivity = 400;
 int read1[pins];
 long firstRead[pins] = {0};
 long minRead = 0;
@@ -138,6 +141,7 @@ allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
 }
 
 void Spark(){
+   DEBUG("Called spark");
 singleSparkEvent = t.pulse(SPARKER_PIN, SPARKER_ON_TIME, HIGH);
 sparkerEvent = 1;
 }
@@ -333,8 +337,10 @@ t.stop(pooferEvent);
 pooferEvent = 0;
 long OffDiff = millis() - touchEnded;
 if (OffDiff > SPARK_END_MILLIS){
+   DEBUG("terminate sparker");
     digitalWrite (SPARKER_PIN, LOW);
-    ::t.stop(allsparkEvent);
+    t.stop(allsparkEvent);
+    t.stop(singleSparkEvent);
     sparkerEvent = 0;
     if(OffDiff > PILOT_END_MILLIS){
       digitalWrite (PILOT_PIN, LOW);
@@ -368,29 +374,27 @@ void Poofer::display(long millis) {
   myMillis = Mills - pooferStartTime;
   //DEBUG("Called Poofer");
   //DEBUG(millis);
-  if (myMillis > PILOT_START_MILLIS){
-    digitalWrite (PILOT_PIN, HIGH);
-        if (myMillis > FINAL_POOF_OFF_MILLIS){
-        digitalWrite (PILOT_PIN, LOW);
+          if (myMillis > FINAL_POOF_OFF_MILLIS){
+        digitalWrite (POOFER_PIN, LOW);
         poofComplete = true;
-      }
-      else if (myMillis > FINAL_POOF_ON_MILLIS){
-digitalWrite (PILOT_PIN, HIGH);
+          }
+     else if (myMillis > FINAL_POOF_ON_MILLIS){
+digitalWrite (POOFER_PIN, HIGH);
       }
        else if (myMillis > LONG_POOF_OFF_MILLIS){
-digitalWrite (PILOT_PIN, LOW);
+digitalWrite (POOFER_PIN, LOW);
        }
        else if (myMillis > LONG_POOF_ON_MILLIS){
-digitalWrite (PILOT_PIN, HIGH);
+digitalWrite (POOFER_PIN, HIGH);
        }
        else if (myMillis > MED_POOF_OFF_MILLIS){
-digitalWrite (PILOT_PIN, LOW);
+digitalWrite (POOFER_PIN, LOW);
        }
         else if (myMillis > MED_POOF_ON_MILLIS){
-digitalWrite (PILOT_PIN, HIGH);
+digitalWrite (POOFER_PIN, HIGH);
        }
        else if (myMillis > SHORT_POOF_OFF_MILLIS){
-digitalWrite (PILOT_PIN, LOW);
+digitalWrite (POOFER_PIN, LOW);
        }
       else if (myMillis > SHORT_POOF_ON_MILLIS){
         digitalWrite (PILOT_PIN, HIGH);
@@ -398,9 +402,11 @@ digitalWrite (PILOT_PIN, LOW);
         else if(myMillis > SPARK_START_MILLIS){
         if (sparkerEvent == 0){
         SparkMaster();
-        }
         DEBUG("Sparker Start", millis);
         }
+        else if (myMillis > PILOT_START_MILLIS){
+    digitalWrite (PILOT_PIN, HIGH);
+      }
         else{
         }
     }
