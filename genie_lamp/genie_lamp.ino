@@ -95,7 +95,7 @@ int base[pins];
 long lastBase[pins];
 
 //Poofer Stuff
-long pooferStartTime = 0;
+long pooferCalledTime = 0;
 int sparkerEvent = 0;
 int pooferEvent = 0;
 int resting = 0;
@@ -323,7 +323,9 @@ void Poofer::setup() {
     digitalWrite (PILOT_PIN, LOW);
 }
 void Poofer::initialize() {
-  0;      // XXX TODO XXX
+  pooferCalledTime = 0;
+  pooferEvent = 0;
+  // XXX TODO XXX
 }
 void Poofer::Update(){
   // perform a poof of specified duration
@@ -334,15 +336,13 @@ void Poofer::off(long touchEnded) {
 //PILOT_END_MILLIS 3000//stop pilot solenoid
 digitalWrite(POOFER_PIN, LOW);
 t.stop(pooferEvent);
-pooferEvent = 0;
+
 long OffDiff = millis() - touchEnded;
 if (OffDiff > SPARK_END_MILLIS && allsparkEvent != 0){
    DEBUG("terminate sparker");
     digitalWrite (SPARKER_PIN,LOW);
-    allsparkEvent = 0;
     t.stop(allsparkEvent);
     t.stop(singleSparkEvent);
-    sparkerEvent = 0;
     if(OffDiff > PILOT_END_MILLIS){
       digitalWrite (PILOT_PIN, LOW);
     }
@@ -367,12 +367,12 @@ void Poofer::display(long millis) {
 #define SPARK_END_MILLIS 2000 //stop spark ignitor
 #define SPARK_END_MILLIS 3000//stop pilot solenoid
   */
-  if (pooferStartTime == 0){
-   pooferStartTime = millis;
+  if (pooferCalledTime == 0){
+   pooferCalledTime = millis;
   }
   else{
  Mills = millis;
-  myMillis = Mills - pooferStartTime;
+  myMillis = millis - pooferCalledTime;
   //DEBUG("Called Poofer");
   //DEBUG(millis);
           if (myMillis > FINAL_POOF_OFF_MILLIS){
@@ -398,19 +398,19 @@ digitalWrite (POOFER_PIN, HIGH);
 digitalWrite (POOFER_PIN, LOW);
        }
       else if (myMillis > SHORT_POOF_ON_MILLIS){
-        digitalWrite (PILOT_PIN, HIGH);
+        digitalWrite (POOFER_PIN, HIGH);
       }
         else if(myMillis > SPARK_START_MILLIS){
         if (sparkerEvent == 0){
         SparkMaster();
         DEBUG("Sparker Start", millis);
         }
+        }
         else if (myMillis > PILOT_START_MILLIS){
     digitalWrite (PILOT_PIN, HIGH);
       }
         else{
         }
-    }
   }
 }
 /** FINISH Poofer Modules Definitions ***/
@@ -533,7 +533,7 @@ DEBUG(" after initialize");
     //confidence = 0;
     FastLED.clear();
     FastLED.show();
-    t.stop(FastUpdateTask);
+   // t.stop(FastUpdateTask);
     poofComplete = false;
     DEBUG("POOFER THING", poofComplete, touched_millis);
     }
