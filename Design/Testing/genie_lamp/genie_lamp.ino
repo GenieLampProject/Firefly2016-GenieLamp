@@ -336,9 +336,10 @@ digitalWrite(POOFER_PIN, LOW);
 t.stop(pooferEvent);
 pooferEvent = 0;
 long OffDiff = millis() - touchEnded;
-if (OffDiff > SPARK_END_MILLIS){
+if (OffDiff > SPARK_END_MILLIS && allsparkEvent != 0){
    DEBUG("terminate sparker");
-    digitalWrite (SPARKER_PIN, LOW);
+    digitalWrite (SPARKER_PIN,LOW);
+    allsparkEvent = 0;
     t.stop(allsparkEvent);
     t.stop(singleSparkEvent);
     sparkerEvent = 0;
@@ -441,6 +442,7 @@ void BodyLEDs::off(long timeOff) {
   else{
    long CurTime = millis() - timeOff;
   fade = constrain(map(CurTime, timeCalledEnd, timeOffEnd, brightCal, 0), 0, 255);
+   DEBUG (fade);
   FastLED.setBrightness(fade);
   // turn leds off     // XXX TODO XXX
   }
@@ -521,7 +523,7 @@ DEBUG(" after initialize");
     } 
     else {
       // XXX TODO XXX See if we should progress to the next output stage
-      DEBUG(" being touched ");
+      //DEBUG(" being touched ");
       poofer->display(touched_millis);
       bodyLEDs->display(touched_millis);
       if (poofComplete == true){
