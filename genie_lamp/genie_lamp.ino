@@ -1,5 +1,6 @@
 // uncomment the following to disable serial debug statements
 //#define SERIAL_DEBUG false
+#define SMOKE_SERIAL Serial2
 #include <SerialDebug.h>
 #include "Timer.h"
 #include "FastLED.h"
@@ -105,6 +106,12 @@ long touchEnded = 0;
  long Mills = 0;
 //time that the last touch ended.
 
+
+//Smoke Stuff
+int spoutRed;
+int spoutBlue;
+int spoutGreen;
+int smoke;
 /*** FINISH Constants ***/
 
 
@@ -141,7 +148,7 @@ allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
 }
 
 void Spark(){
-   DEBUG("Called spark");
+   //DEBUG("Called spark");
 singleSparkEvent = t.pulse(SPARKER_PIN, SPARKER_ON_TIME, HIGH);
 sparkerEvent = 1;
 }
@@ -217,6 +224,7 @@ class BodyLEDs : public OutputBase
 /** BEGIN Touch Modules Definitions ***/
 void Touch::setup() {
   SERIAL_DEBUG_SETUP(9600);
+  SMOKE_SERIAL.begin(9600);
     //"touch setup Called");
   //takes a baseline reading for the sensor.
   int bpin;
@@ -381,6 +389,22 @@ void Poofer::display(long millis) {
           }
      else if (myMillis > FINAL_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
+int duration = (FINAL_POOF_OFF_MILLIS-FINAL_POOF_ON_MILLIS)/1000;
+SMOKE_SERIAL.print(duration);
+Serial.print("printed Poof: ");
+Serial.println(duration);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
       }
        else if (myMillis > LONG_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
@@ -455,6 +479,7 @@ void BodyLEDs::display(long millis) {
   fade = 0;
   timeEnd = timeCalled + SHORT_POOF_ON_MILLIS;
   brightCal= constrain(map(millis, timeCalled, timeEnd, 0, 255), 0, 255);
+  spoutRed = brightCal;
   for(int i = 0; i < LEFT_NUM_LEDS; i++ )
    {
    left[i].setRGB(0,255,0);  // setRGB functions works by setting
