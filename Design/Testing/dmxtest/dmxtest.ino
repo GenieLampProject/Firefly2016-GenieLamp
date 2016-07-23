@@ -34,8 +34,13 @@ int green=0;
 int blue=0;
 /**Smoke Stuff **/
 int smoke = 0;
-void setup() {
+boolean smokeON = false;
+int ledPin = 13;
+long smokeTime = 0;
 
+void setup() {
+pinMode (ledPin, OUTPUT);
+digitalWrite (ledPin, LOW);
  /**DMX MASTER CODE**/
    /* The most common pin for DMX output is pin 3, which DmxMaster
 ** uses by default. If you need to change that, do it here. */
@@ -66,18 +71,10 @@ void loop() {
     int greenIn = Serial.parseInt();
     int blueIn = Serial.parseInt();
      if (Serial.read() == '\n') {
-    if (redIn && blueIn && greenIn == 0){
-      red= red--;
-      blue = blue--;
-      green = green--;
-      smoke = smokeIn;
-    }
-    else{
       red = redIn;
       blue = blueIn;
       green = greenIn;
       smoke = smokeIn;
-    }
     DmxMaster.write(2, red);
     Serial.print("Red Brightness: ");
     Serial.println(red);
@@ -87,16 +84,35 @@ void loop() {
     DmxMaster.write(4, green);
     Serial.print("Green Brightness: ");
     Serial.println(green);
-    if (smoke != 0){
+    if (smokeON == true){
+      if(smoke > 0){
     DmxMaster.write(1, 255);
-    Serial.println("machine On poofing");
-    delay(smoke*1000);
+    Serial.println("machine still poofing");
+    digitalWrite (ledPin, HIGH);
+    Serial.println(smokeON);
+      }
+      else{
     DmxMaster.write(1, 0);
     Serial.println("machine stopped poofing");
+    digitalWrite (ledPin, LOW);
+    smokeON = false;
+    Serial.println(smokeON);
+      }
+    }
+   else {
+      if (smoke > 0){
+        DmxMaster.write(1, smoke);
+    Serial.println("machine On poofing");
+    digitalWrite (ledPin, HIGH);
+    smokeON = true;
+    Serial.println(smokeON);
+      }
+    }
+
     }
   }
+ // Serial.println(smokeON);
   }
-}
 
 void establishContact() {
   while (Serial.available() <= 0) {
