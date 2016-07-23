@@ -100,7 +100,7 @@ long pooferStartTime = 0;
 int sparkerEvent = 0;
 int pooferEvent = 0;
 int resting = 0;
-bool poofComplete = false;
+boolean poofComplete = false;
 long touchEnded = 0;
  long myMillis = 0;
  long Mills = 0;
@@ -112,6 +112,7 @@ int spoutRed;
 int spoutBlue;
 int spoutGreen;
 int smoke;
+int intensity;
 /*** FINISH Constants ***/
 
 
@@ -144,11 +145,12 @@ int smoke;
 int allsparkEvent = 0;
 int singleSparkEvent = 0;
 void SparkMaster(){
+  DEBUG("Called sparkMaster");
 allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
 }
 
 void Spark(){
-   //DEBUG("Called spark");
+   DEBUG("Called spark");
 singleSparkEvent = t.pulse(SPARKER_PIN, SPARKER_ON_TIME, HIGH);
 sparkerEvent = 1;
 }
@@ -331,25 +333,51 @@ void Poofer::setup() {
     digitalWrite (PILOT_PIN, LOW);
 }
 void Poofer::initialize() {
-  0;      // XXX TODO XXX
+  pooferStartTime = 0;  
+    t.stop(allsparkEvent);
+    t.stop(singleSparkEvent);
+      digitalWrite (SPARKER_PIN, LOW);
+      digitalWrite (POOFER_PIN, LOW);
+      digitalWrite (PILOT_PIN, LOW);
+    sparkerEvent = 0;
+    allsparkEvent = 0;
+    singleSparkEvent = 0;
+          
+      // XXX TODO XXX
 }
 void Poofer::Update(){
   // perform a poof of specified duration
  t.update();
 }
 void Poofer::off(long touchEnded) {
+poofComplete = false;
 //SPARK_END_MILLIS 2000 //stop spark ignitor
 //PILOT_END_MILLIS 3000//stop pilot solenoid
 digitalWrite(POOFER_PIN, LOW);
+SMOKE_SERIAL.print(0);
+Serial.print("printed Poof: ");
+Serial.println(0);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
 t.stop(pooferEvent);
 pooferEvent = 0;
 long OffDiff = millis() - touchEnded;
 if (OffDiff > SPARK_END_MILLIS && allsparkEvent != 0){
    DEBUG("terminate sparker");
-    digitalWrite (SPARKER_PIN,LOW);
     allsparkEvent = 0;
     t.stop(allsparkEvent);
     t.stop(singleSparkEvent);
+    digitalWrite (SPARKER_PIN,LOW);
     sparkerEvent = 0;
     if(OffDiff > PILOT_END_MILLIS){
       digitalWrite (PILOT_PIN, LOW);
@@ -389,10 +417,10 @@ void Poofer::display(long millis) {
           }
      else if (myMillis > FINAL_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
-int duration = (FINAL_POOF_OFF_MILLIS-FINAL_POOF_ON_MILLIS)/1000;
-SMOKE_SERIAL.print(duration);
+intensity = 255;
+SMOKE_SERIAL.print(intensity);
 Serial.print("printed Poof: ");
-Serial.println(duration);
+Serial.println(intensity);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
 Serial.print("printed Red: ");
@@ -408,35 +436,129 @@ Serial.println(spoutGreen);
       }
        else if (myMillis > LONG_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
+SMOKE_SERIAL.print(0);
+Serial.print("printed Poof: ");
+Serial.println(0);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
        }
        else if (myMillis > LONG_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
+intensity = 200;
+SMOKE_SERIAL.print(intensity);
+Serial.print("printed Poof: ");
+Serial.println(intensity);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
        }
        else if (myMillis > MED_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
+SMOKE_SERIAL.print(0);
+Serial.print("printed Poof: ");
+Serial.println(0);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
        }
         else if (myMillis > MED_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
+intensity = 120;
+SMOKE_SERIAL.print(intensity);
+Serial.print("printed Poof: ");
+Serial.println(intensity);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
        }
        else if (myMillis > SHORT_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
+SMOKE_SERIAL.print(0);
+Serial.print("printed Poof: ");
+Serial.println(0);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
        }
       else if (myMillis > SHORT_POOF_ON_MILLIS){
         digitalWrite (PILOT_PIN, HIGH);
+        intensity = 122;
+SMOKE_SERIAL.print(intensity);
+Serial.print("printed Poof: ");
+Serial.println(intensity);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+Serial.print("printed Red: ");
+Serial.println(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+Serial.print("printed Blue: ");
+Serial.println(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+Serial.print("printed Green: ");
+Serial.println(spoutGreen);
       }
         else if(myMillis > SPARK_START_MILLIS){
         if (sparkerEvent == 0){
         SparkMaster();
         DEBUG("Sparker Start", millis);
         }
+        }
         else if (myMillis > PILOT_START_MILLIS){
     digitalWrite (PILOT_PIN, HIGH);
       }
         else{
+          DEBUG("got to poofer else");
         }
     }
   }
-}
 /** FINISH Poofer Modules Definitions ***/
 
 /** BEGIN BodyLEDs Modules Definitions ***/
@@ -542,17 +664,17 @@ DEBUG(" after initialize");
     t.update();
     touched_millis = touch->touched_time();
     if (!touched_millis) {
+      DEBUG("got to main if (nottouched)");
       poofer->off(touchEnded);
       bodyLEDs->off(touchEnded);
       //DEBUG("shut off everything");
     } 
-    else {
-      // XXX TODO XXX See if we should progress to the next output stage
-      //DEBUG(" being touched ");
-      poofer->display(touched_millis);
-      bodyLEDs->display(touched_millis);
-      if (poofComplete == true){
-        touched_millis = 0;
+    else  if (poofComplete == true){
+ touch->initialize();
+  poofer->initialize();
+  bodyLEDs->initialize();
+  DEBUG("got to main re-initialize");
+ /*       touched_millis = 0;
     minRead = 0;
     memset(firstRead, 0, sizeof(firstRead));
     //confidence = 0;
@@ -561,7 +683,14 @@ DEBUG(" after initialize");
     t.stop(FastUpdateTask);
     poofComplete = false;
     DEBUG("POOFER THING", poofComplete, touched_millis);
+    */
     }
+    else {
+      DEBUG("got to main else(touched)");
+      // XXX TODO XXX See if we should progress to the next output stage
+      //DEBUG(" being touched ");
+      poofer->display(touched_millis);
+      bodyLEDs->display(touched_millis);
       }
       //DEBUG(" after initialize");
     }
