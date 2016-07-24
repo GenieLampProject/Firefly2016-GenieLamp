@@ -1,13 +1,31 @@
 // uncomment the following to disable serial debug statements
 //#define SERIAL_DEBUG false
+/**Uncomment below line to turn off Communication messages. **/
+//#define COMM false
 #define SMOKE_SERIAL Serial2
 #include <SerialDebug.h>
 #include "Timer.h"
 #include "FastLED.h"
+/*
+* Utility functions to help debugging running code.
+*/
+
+
+
+#ifdef COMM
+#define COMM_PRINT(x)  Serial.print (x)
+#define COMM_PRINTLN(x)  Serial.println (x)
+#else
+#define COMM_PRINT(x)
+#define COMM_PRINTLN(x)
+#endif
+
+
 
 /*** control.ino
         Master control for the genie lamp project
  ***/
+
 
 //debug print line
 /*#ifdef DEBUG
@@ -160,7 +178,7 @@ void FastUpdateSetup(){
 }
 void FastUpdate(){
   FastLED.show();
-  DEBUG(" showing FASTLED");
+  //DEBUG(" showing FASTLED");
 }
 void Poof(long Duration){
   // perform a poof of specified duration
@@ -355,24 +373,25 @@ poofComplete = false;
 //PILOT_END_MILLIS 3000//stop pilot solenoid
 digitalWrite(POOFER_PIN, LOW);
 SMOKE_SERIAL.print(0);
-Serial.print("printed Poof: ");
-Serial.println(0);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(0);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
 t.stop(pooferEvent);
 pooferEvent = 0;
 long OffDiff = millis() - touchEnded;
-if (OffDiff > SPARK_END_MILLIS && allsparkEvent != 0){
+DEBUG("offDiff",OffDiff);
+if (OffDiff >= SPARK_END_MILLIS && allsparkEvent != 0){
    DEBUG("terminate sparker");
     allsparkEvent = 0;
     t.stop(allsparkEvent);
@@ -419,131 +438,131 @@ void Poofer::display(long millis) {
 digitalWrite (POOFER_PIN, HIGH);
 intensity = 255;
 SMOKE_SERIAL.print(intensity);
-Serial.print("printed Poof: ");
-Serial.println(intensity);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(intensity);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
       }
        else if (myMillis > LONG_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
 SMOKE_SERIAL.print(0);
-Serial.print("printed Poof: ");
-Serial.println(0);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(0);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
        }
        else if (myMillis > LONG_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
 intensity = 200;
 SMOKE_SERIAL.print(intensity);
-Serial.print("printed Poof: ");
+COMM_PRINT("printed Poof: ");
 Serial.println(intensity);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
        }
        else if (myMillis > MED_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
 SMOKE_SERIAL.print(0);
-Serial.print("printed Poof: ");
-Serial.println(0);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(0);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
        }
         else if (myMillis > MED_POOF_ON_MILLIS){
 digitalWrite (POOFER_PIN, HIGH);
 intensity = 120;
 SMOKE_SERIAL.print(intensity);
-Serial.print("printed Poof: ");
-Serial.println(intensity);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(intensity);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
        }
        else if (myMillis > SHORT_POOF_OFF_MILLIS){
 digitalWrite (POOFER_PIN, LOW);
 SMOKE_SERIAL.print(0);
-Serial.print("printed Poof: ");
-Serial.println(0);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(0);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
        }
       else if (myMillis > SHORT_POOF_ON_MILLIS){
         digitalWrite (PILOT_PIN, HIGH);
         intensity = 122;
 SMOKE_SERIAL.print(intensity);
-Serial.print("printed Poof: ");
-Serial.println(intensity);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(intensity);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutRed);
-Serial.print("printed Red: ");
-Serial.println(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.print(spoutBlue);
-Serial.print("printed Blue: ");
-Serial.println(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
 SMOKE_SERIAL.print(",");
 SMOKE_SERIAL.println(spoutGreen);
-Serial.print("printed Green: ");
-Serial.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
       }
         else if(myMillis > SPARK_START_MILLIS){
         if (sparkerEvent == 0){
@@ -582,13 +601,14 @@ void BodyLEDs::off(long timeOff) {
   }
 
   else if (millis() > timeOffEnd){
+    //DEBUG ("got to BODYLEDS.off Elif");
     FastLED.clear();
     t.stop(FastUpdateTask);
   }
   else{
    long CurTime = millis() - timeOff;
   fade = constrain(map(CurTime, timeCalledEnd, timeOffEnd, brightCal, 0), 0, 255);
-   DEBUG (fade);
+   //DEBUG (fade);
   FastLED.setBrightness(fade);
   // turn leds off     // XXX TODO XXX
   }
@@ -656,7 +676,7 @@ void loop() {
   touch->initialize();
   poofer->initialize();
   bodyLEDs->initialize();
-DEBUG(" after initialize");
+//DEBUG(" after initialize");
 //DEBUG(" after initialize");
   // Main operational loop
   long touched_millis;
@@ -664,7 +684,7 @@ DEBUG(" after initialize");
     t.update();
     touched_millis = touch->touched_time();
     if (!touched_millis) {
-      DEBUG("got to main if (nottouched)");
+      //DEBUG("got to main if (nottouched)");
       poofer->off(touchEnded);
       bodyLEDs->off(touchEnded);
       //DEBUG("shut off everything");
@@ -673,7 +693,7 @@ DEBUG(" after initialize");
  touch->initialize();
   poofer->initialize();
   bodyLEDs->initialize();
-  DEBUG("got to main re-initialize");
+  //DEBUG("got to main re-initialize");
  /*       touched_millis = 0;
     minRead = 0;
     memset(firstRead, 0, sizeof(firstRead));
@@ -686,7 +706,7 @@ DEBUG(" after initialize");
     */
     }
     else {
-      DEBUG("got to main else(touched)");
+      //DEBUG("got to main else(touched)");
       // XXX TODO XXX See if we should progress to the next output stage
       //DEBUG(" being touched ");
       poofer->display(touched_millis);
