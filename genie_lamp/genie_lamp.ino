@@ -122,6 +122,7 @@ boolean poofComplete = false;
 long touchEnded = 0;
  long myMillis = 0;
  long Mills = 0;
+ long OffDiff = 0;
 //time that the last touch ended.
 
 
@@ -129,7 +130,6 @@ long touchEnded = 0;
 int spoutRed;
 int spoutBlue;
 int spoutGreen;
-int smoke;
 int intensity;
 /*** FINISH Constants ***/
 
@@ -164,13 +164,15 @@ int allsparkEvent = 0;
 int singleSparkEvent = 0;
 void SparkMaster(){
   DEBUG("Called sparkMaster");
+  if (sparkerEvent = 0){
 allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
+  }
+  sparkerEvent = 1;
 }
 
 void Spark(){
    DEBUG("Called spark");
 singleSparkEvent = t.pulse(SPARKER_PIN, SPARKER_ON_TIME, HIGH);
-sparkerEvent = 1;
 }
 int FastUpdateTask = 0;
 void FastUpdateSetup(){
@@ -237,6 +239,17 @@ class BodyLEDs : public OutputBase
     virtual void off(long timeOff);
     virtual void display(long millis);
 };
+
+class Smoke : public OutputBase
+{
+  public:
+    virtual void setup();
+    virtual void initialize();
+    virtual void off(long timeOff);
+    virtual void display(long millis);
+    virtual void Update();
+};
+
 /** BEGIN Output Modules Declarations ***/
 /** FINISH Modules Declarations ***/
 
@@ -244,7 +257,6 @@ class BodyLEDs : public OutputBase
 /** BEGIN Touch Modules Definitions ***/
 void Touch::setup() {
   SERIAL_DEBUG_SETUP(9600);
-  SMOKE_SERIAL.begin(9600);
     //"touch setup Called");
   //takes a baseline reading for the sensor.
   int bpin;
@@ -262,8 +274,8 @@ long Touch::touched_time() {
   //returns a long from the sensors that tells the duration of the touch
   long timeCalled = millis();
   bool touched = false;
-  int tolerance = 400;
-  attempts = constrain(attempts, 0, 3000);
+  int tolerance = 300;
+  attempts = constrain(attempts, 0, 200);
   confidence = max (confidence, 0);
   int readPin;
   long result;
@@ -283,7 +295,7 @@ long Touch::touched_time() {
     //sample the read pin to detect touch.
      if (Difference > sensitivity) {
       touched = true;
-      confidence = confidence+2;
+      confidence = confidence+1;
       attempts = tolerance + confidence;
       if (minReadResult == 0){
         minReadResult = readTime[readPin];
@@ -389,8 +401,8 @@ COMM_PRINT("printed Green: ");
 COMM_PRINTLN(spoutGreen);
 t.stop(pooferEvent);
 pooferEvent = 0;
-long OffDiff = millis() - touchEnded;
-DEBUG("offDiff",OffDiff);
+OffDiff = millis() - touchEnded;
+DEBUG("offDiff",OffDiff, SPARK_END_MILLIS, allsparkEvent, touchEnded,attempts);
 if (OffDiff >= SPARK_END_MILLIS && allsparkEvent != 0){
    DEBUG("terminate sparker");
     allsparkEvent = 0;
@@ -580,6 +592,55 @@ COMM_PRINTLN(spoutGreen);
   }
 /** FINISH Poofer Modules Definitions ***/
 
+/** BEGIN Smoke Modules Definitions ***/
+void Smoke::setup() {
+    SMOKE_SERIAL.begin(9600);
+}
+void Smoke::initialize() {
+0;
+     // XXX TODO XXX
+}
+void Smoke::Update(){
+ // XXX TODO XXX
+}
+void Smoke::off(long touchEnded) {
+//SPARK_END_MILLIS 2000 //stop spark ignitor
+//PILOT_END_MILLIS 3000//stop pilot solenoid
+SMOKE_SERIAL.print(0);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(0);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
+}
+void Smoke::display(long millis) {
+intensity = 255;
+SMOKE_SERIAL.print(intensity);
+COMM_PRINT("printed Poof: ");
+COMM_PRINTLN(intensity);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutRed);
+COMM_PRINT("printed Red: ");
+COMM_PRINTLN(spoutRed);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.print(spoutBlue);
+COMM_PRINT("printed Blue: ");
+COMM_PRINTLN(spoutBlue);
+SMOKE_SERIAL.print(",");
+SMOKE_SERIAL.println(spoutGreen);
+COMM_PRINT("printed Green: ");
+COMM_PRINTLN(spoutGreen);
+  }
+/** FINISH Smoke Modules Definitions ***/
 /** BEGIN BodyLEDs Modules Definitions ***/
 void BodyLEDs::setup() {
    // tell FastLED about the LED strip configuration
@@ -649,6 +710,7 @@ void BodyLEDs::display(long millis) {
 /*** BEGIN Control Initialization***/
 Touch* touch;
 Poofer* poofer;
+Smoke* smoke;
 BodyLEDs* bodyLEDs;
 /*** FINISH Control Initialization***/
 
@@ -659,10 +721,12 @@ BodyLEDs* bodyLEDs;
 void setup() {
   touch = new Touch();
   poofer = new Poofer();
+  smoke = new Smoke();
   bodyLEDs = new BodyLEDs();
 
   touch->setup();
   poofer->setup();
+  smoke->setup();
   bodyLEDs->setup();
 }
 /*** FINISH Setup Routine ***/
@@ -675,6 +739,7 @@ void loop() {
   // Initialize
   touch->initialize();
   poofer->initialize();
+  //smoke->initialize();
   bodyLEDs->initialize();
 //DEBUG(" after initialize");
 //DEBUG(" after initialize");
@@ -686,12 +751,14 @@ void loop() {
     if (!touched_millis) {
       //DEBUG("got to main if (nottouched)");
       poofer->off(touchEnded);
+      //smoke->off(touchEnded);
       bodyLEDs->off(touchEnded);
       //DEBUG("shut off everything");
     } 
     else  if (poofComplete == true){
  touch->initialize();
   poofer->initialize();
+  //smoke->initialize();
   bodyLEDs->initialize();
   //DEBUG("got to main re-initialize");
  /*       touched_millis = 0;
@@ -711,6 +778,7 @@ void loop() {
       //DEBUG(" being touched ");
       poofer->display(touched_millis);
       bodyLEDs->display(touched_millis);
+      //smoke->display(touched_millis);
       }
       //DEBUG(" after initialize");
     }
