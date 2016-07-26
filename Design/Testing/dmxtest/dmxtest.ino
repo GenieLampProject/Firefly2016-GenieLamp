@@ -71,6 +71,7 @@ void loop() {
     int greenIn = Serial.parseInt();
     int blueIn = Serial.parseInt();
      if (Serial.read() == '\n') {
+      digitalWrite (ledPin, HIGH);
       red = redIn;
       blue = blueIn;
       green = greenIn;
@@ -88,13 +89,13 @@ void loop() {
       if(smoke > 0){
     DmxMaster.write(1, 255);
     Serial.println("machine still poofing");
-    digitalWrite (ledPin, HIGH);
+   // digitalWrite (ledPin, HIGH);
     Serial.println(smokeON);
       }
       else{
     DmxMaster.write(1, 0);
     Serial.println("machine stopped poofing");
-    digitalWrite (ledPin, LOW);
+  //  digitalWrite (ledPin, LOW);
     smokeON = false;
     Serial.println(smokeON);
       }
@@ -103,12 +104,15 @@ void loop() {
       if (smoke > 0){
         DmxMaster.write(1, smoke);
     Serial.println("machine On poofing");
-    digitalWrite (ledPin, HIGH);
+  //  digitalWrite (ledPin, HIGH);
     smokeON = true;
     Serial.println(smokeON);
       }
     }
 
+    }
+    else{
+      digitalWrite (ledPin, LOW);
     }
   }
  // Serial.println(smokeON);
