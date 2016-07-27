@@ -73,7 +73,7 @@
 //Timer stuff
 Timer t;
 
-  
+
 //FastLED stuff
 #define LED_TYPE    WS2812
 #define COLOR_ORDER RGB
@@ -105,7 +105,8 @@ int confidence = 0;
 const int pins = TOUCH_TOTAL_PINS;
 const int touchPin[pins] = {TOUCH_LEFT_FRONT_PIN, TOUCH_LEFT_MIDDLE_PIN, TOUCH_LEFT_BACK_PIN, TOUCH_RIGHT_FRONT_PIN, TOUCH_RIGHT_MIDDLE_PIN, TOUCH_RIGHT_BACK_PIN};
 /*Needed for readings*/
-const int sensitivity = 400;
+const int sensitivity = 200;
+//const int sensitivity = 400;
 int read1[pins];
 long firstRead[pins] = {0};
 long minRead = 0;
@@ -146,7 +147,7 @@ int intensity;
 #define MED_POOF_ON_MILLIS 10500//open poof solenoid
 #define MED_POOF_OFF_MILLIS 10700//close poof solenoid
 #define LONG_POOF_ON_MILLIS 10900//open poof solenoid
-#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid  
+#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid
 #define FINAL_POOF_ON_MILLIS 11400//open poof solenoid
 #define FINAL_POOF_OFF_MILLIS 13000//close poof solenoid
  /* when lamp NOT rubbed for: */
@@ -162,7 +163,7 @@ int intensity;
 /** BEGIN Modules Declarations ***/
 int allsparkEvent = 0;
 int singleSparkEvent = 0;
-void SparkMaster(){
+void SparkMaster(){     // XXX JGF XXX TODO XXX Move into Poofer::Spark()
   DEBUG("Called sparkMaster");
   if (sparkerEvent = 0){
 allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
@@ -170,7 +171,7 @@ allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
   sparkerEvent = 1;
 }
 
-void Spark(){
+void Spark(){     // XXX JGF XXX TODO XXX Move into Poofer::Spark()
    DEBUG("Called spark");
 singleSparkEvent = t.pulse(SPARKER_PIN, SPARKER_ON_TIME, HIGH);
 }
@@ -182,7 +183,7 @@ void FastUpdate(){
   FastLED.show();
   //DEBUG(" showing FASTLED");
 }
-void Poof(long Duration){
+void Poof(long Duration){     // XXX JGF XXX TODO XXX Move into Poofer::Spark()
   // perform a poof of specified duration
  pooferEvent = t.pulse(POOFER_PIN, Duration, HIGH);
 }
@@ -267,7 +268,7 @@ void Touch::setup() {
   }
 }
 void Touch::initialize() {
-  
+
 }
 long Touch::touched_time() {
   //DEBUG("touched_time Called");
@@ -311,8 +312,8 @@ long Touch::touched_time() {
       }
      }
      else{
-     
-     
+
+
      // DEBUG(" PIN EMPTY ");
      }
   }
@@ -354,7 +355,7 @@ long Touch::touched_time() {
 
 /** BEGIN Poofer Modules Definitions ***/
 void Poofer::setup() {
-    
+
     pinMode (SPARKER_PIN, OUTPUT);
     digitalWrite (SPARKER_PIN, LOW);
     pinMode (POOFER_PIN, OUTPUT);
@@ -363,7 +364,7 @@ void Poofer::setup() {
     digitalWrite (PILOT_PIN, LOW);
 }
 void Poofer::initialize() {
-  pooferStartTime = 0;  
+  pooferStartTime = 0;
     t.stop(allsparkEvent);
     t.stop(singleSparkEvent);
       digitalWrite (SPARKER_PIN, LOW);
@@ -372,7 +373,7 @@ void Poofer::initialize() {
     sparkerEvent = 0;
     allsparkEvent = 0;
     singleSparkEvent = 0;
-          
+
       // XXX TODO XXX
 }
 void Poofer::Update(){
@@ -426,7 +427,7 @@ void Poofer::display(long millis) {
 #define MED_POOF_ON_MILLIS 10500//open poof solenoid
 #define MED_POOF_OFF_MILLIS 10700//close poof solenoid
 #define LONG_POOF_ON_MILLIS 10900//open poof solenoid
-#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid  
+#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid
 #define FINAL_POOF_ON_MILLIS 11400//open poof solenoid
 #define FINAL_POOF_OFF_MILLIS 13000//close poof solenoid
  /* when lamp NOT rubbed for:
@@ -754,7 +755,7 @@ void loop() {
       //smoke->off(touchEnded);
       bodyLEDs->off(touchEnded);
       //DEBUG("shut off everything");
-    } 
+    }
     else  if (poofComplete == true){
  touch->initialize();
   poofer->initialize();
