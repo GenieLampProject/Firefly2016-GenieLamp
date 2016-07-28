@@ -16,15 +16,18 @@
 
 /*** BEGIN Testing Flags ***/
 #define TEST_PIN 6
-//#define USE_CONFIGURABLE
+#define USE_CONFIGURABLE
 //#define JGF_DEBUG
+#define COMM
 /*** FINISH Testing Flags ***/
 
 /*** BEGIN Macros ***/
 #ifdef COMM
+#define COMM_BEGIN(x) Serial.begin(x)
 #define COMM_PRINT(x)  Serial.print (x)
 #define COMM_PRINTLN(x)  Serial.println (x)
 #else
+#define COMM_BEGIN(x)
 #define COMM_PRINT(x)
 #define COMM_PRINTLN(x)
 #endif
@@ -308,7 +311,7 @@ class Smoke : public OutputBase
 /** BEGIN Modules Definitions ***/
 /** BEGIN Touch Modules Definitions ***/
 void Touch::setup() {
-    SERIAL_DEBUG_SETUP(9600);
+    SERIAL_DEBUG_SETUP(38400);
         //"touch setup Called");
     //takes a baseline reading for the sensor.
     byte bpin;
@@ -461,10 +464,11 @@ void Poofer::off(long touchEnded) {
     SMOKE_SERIAL.println(this->spoutGreen);
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
+    delay(10);
     timer.stop(this->pooferEvent);
     this->pooferEvent = 0;
     this->OffDiff = millis() - touchEnded;
-    DEBUG("offDiff", this->OffDiff, SPARK_END_MILLIS, this->allsparkEvent, touchEnded);
+    //DEBUG("offDiff", this->OffDiff, SPARK_END_MILLIS, this->allsparkEvent, touchEnded);
     if (this->OffDiff >= SPARK_END_MILLIS && this->allsparkEvent != 0) {
         DEBUG("terminate sparker");
         this->allsparkEvent = 0;
@@ -637,12 +641,12 @@ void Poofer::display(long millis) {
             sparking = true;
             if (!this->sparkerEvent) {
                 this->sparkMaster();
-                DEBUG("Sparker Start", millis);
+                //DEBUG("Sparker Start", millis);
             }
         } else if (this->myMillis > PILOT_START_MILLIS) {
             digitalWrite (this->PILOT_PIN, HIGH);
         } else {
-              DEBUG("got to poofer else");
+              //DEBUG("got to poofer else");
         }
     }
 }
@@ -724,12 +728,13 @@ void Poofer::display_NotToUse(long millis) {
     SMOKE_SERIAL.println(this->spoutGreen);
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
+    delay(10);
 }
 
 
 // Helper callback to match the Timer.h 
 void spark_callback() {
-    DEBUG("Called spark");
+    //DEBUG("Called spark");
     if (sparking) {
         singleSparkEvent = timer.pulse(Poofer::SPARKER_PIN, SPARKER_ON_TIME, HIGH);
     } else {
@@ -738,12 +743,12 @@ void spark_callback() {
 }
 
 void Poofer::spark() {       // XXX JGF XXX TODO XXX Get Timer.h library playing nice with classes and replace spark_callback() XXX TODO XXX JGF XXX
-    DEBUG("Called spark");
+    //DEBUG("Called spark");
 //    this->singleSparkEvent = timer.pulse(this->SPARKER_PIN, SPARKER_ON_TIME, HIGH);
 }
 
 void Poofer::sparkMaster() {
-    DEBUG("Called sparkMaster");
+    //DEBUG("Called sparkMaster");
     if (!this->sparkerEvent) {
         this->allsparkEvent = timer.every(SPARKER_OFF_TIME, spark_callback);
 //        this->allsparkEvent = timer.every(SPARKER_OFF_TIME, this->spark);       // XXX JGF XXX TODO XXX Get Timer.h library playing nice with classes and replace spark_callback() XXX TODO XXX JGF XXX
@@ -761,6 +766,7 @@ void Poofer::poof(long duration) {          // NB: Unused
 
 /** BEGIN Smoke Modules Definitions ***/
 void Smoke::setup() {
+        COMM_BEGIN(38400);
         SMOKE_SERIAL.begin(38400);
 }
 
