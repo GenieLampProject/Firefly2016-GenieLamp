@@ -93,6 +93,7 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
         bool poof_is_on = false;
         int intensity = 0;
 };
+// MUST update POOFER_SCRIPT_LEN when adding or removing script points
 PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(0, false, false, false, 0),
 //    PooferScriptPoint(8000, false, true, false, 0),    // NB: Unsafe to have propane going without an ignition source already going
@@ -108,6 +109,8 @@ PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(13000, true, false, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
     PooferScriptPoint(15000, false, false, false, 0)
 };
+// UPDATEME WITH THE LENGTH OF THE SCRIPT ABOVE
+byte POOFER_SCRIPT_LEN = 11;
 //#define SPARKER_OFF_TIME 500
 //#define SPARKER_ON_TIME 250
 ///* when lamp NOT rubbed for: */
@@ -209,6 +212,7 @@ class Poofer : public OutputBase
         virtual void initialize();
         virtual void off(long timeOff);
         virtual void display(long millis);
+        virtual void display_OLD(long millis);
         virtual void display_configurable(long millis);
         virtual void update();                  // NB: Unused
         virtual void spark();
@@ -397,6 +401,8 @@ void Poofer::setup() {
     digitalWrite (this->POOFER_PIN, LOW);
     pinMode (this->PILOT_PIN, OUTPUT);
     digitalWrite (this->PILOT_PIN, LOW);
+    pinMode (6, OUTPUT);    // XXX DELETEME XXX
+    digitalWrite (6, LOW);    // XXX DELETEME XXX
 }
 
 void Poofer::initialize() {
@@ -406,6 +412,7 @@ void Poofer::initialize() {
     digitalWrite (this->SPARKER_PIN, LOW);
     digitalWrite (this->POOFER_PIN, LOW);
     digitalWrite (this->PILOT_PIN, LOW);
+    digitalWrite (6, LOW);    // XXX DELETEME XXX
     this->sparkerEvent = false;
     this->allsparkEvent = 0;
     singleSparkEvent = 0;
@@ -426,6 +433,8 @@ void Poofer::off(long touchEnded) {
     //SPARK_END_MILLIS 2000 //stop spark ignitor
     //PILOT_END_MILLIS 3000//stop pilot solenoid
     digitalWrite(this->POOFER_PIN, LOW);
+    digitalWrite(this->PILOT_PIN, LOW);
+    digitalWrite (6, LOW);    // XXX DELETEME XXX
     SMOKE_SERIAL.print(0);
     COMM_PRINT("printed poof: ");
     COMM_PRINTLN(0);
@@ -444,7 +453,7 @@ void Poofer::off(long touchEnded) {
     timer.stop(this->pooferEvent);
     this->pooferEvent = 0;
     this->OffDiff = millis() - touchEnded;
-    DEBUG("offDiff", this->OffDiff, SPARK_END_MILLIS, this->allsparkEvent, touchEnded);
+//    DEBUG("offDiff", this->OffDiff, SPARK_END_MILLIS, this->allsparkEvent, touchEnded);
     if (this->OffDiff >= SPARK_END_MILLIS && this->allsparkEvent != 0) {
         DEBUG("terminate sparker");
         this->allsparkEvent = 0;
@@ -452,14 +461,13 @@ void Poofer::off(long touchEnded) {
         timer.stop(singleSparkEvent);
         digitalWrite (this->SPARKER_PIN, LOW);
         this->sparkerEvent = false;
-        if (this->OffDiff > PILOT_END_MILLIS) {
-            digitalWrite (this->PILOT_PIN, LOW);
-        }
     }
     this->last_script_index = 0;
 }
 
-void Poofer::display(long millis) {
+//void Poofer::display(long millis) {
+void Poofer::display_OLD(long millis) {
+DEBUG("got to poofer display");         // XXX DELETEME XXX
 /*
  * when lamp is rubbed for (in millis):
 #define LED_START_MILLIS 2000 //Begin LEDS
@@ -483,6 +491,12 @@ void Poofer::display(long millis) {
     } else {
         this->totalMills = millis;
         this->myMillis = millis - this->pooferStartTime;
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG("In display_OLD with this->myMillis:");
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG(this->myMillis);
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG(" millis: ");
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG(millis);
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG(" and this->pooferStartTime: ");
+//if (this->myMillis > PILOT_START_MILLIS) DEBUG(this->pooferStartTime);
         //DEBUG("Called Poofer");
         //DEBUG(millis);
         if (this->myMillis > FINAL_POOF_OFF_MILLIS) {
@@ -618,42 +632,87 @@ void Poofer::display(long millis) {
             }
         } else if (this->myMillis > PILOT_START_MILLIS) {
             digitalWrite (this->PILOT_PIN, HIGH);
-        } else {
-              DEBUG("got to poofer else");
+//        } else {
+//              DEBUG("got to poofer else");
         }
     }
 }
 
-void Poofer::display_configurable(long millis) {
-/*
- * when lamp is rubbed for (in millis):
-#define LED_START_MILLIS 2000 //Begin LEDS
-#define PILOT_START_MILLIS 8000 //open pilot solenoid
-#define SPARK_START_MILLIS 8250 //start spark ignitor (.5 second duty)
-#define SHORT_POOF_ON_MILLIS 10000//open poof solenoid
-#define SHORT_POOF_OFF_MILLIS 10100//close poof solenoid
-#define MED_POOF_ON_MILLIS 10500//open poof solenoid
-#define MED_POOF_OFF_MILLIS 10700//close poof solenoid
-#define LONG_POOF_ON_MILLIS 10900//open poof solenoid
-#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid
-#define FINAL_POOF_ON_MILLIS 11400//open poof solenoid
-#define FINAL_POOF_OFF_MILLIS 13000//close poof solenoid
- * when lamp NOT rubbed for:
-#define LED_END_MILLIS 500 //Begin LED Fade
-#define SPARK_END_MILLIS 2000 //stop spark ignitor
-#define SPARK_END_MILLIS 3000//stop pilot solenoid
- */
+void Poofer::display(long millis) {
+DEBUG("got to poofer display configurable test");         // XXX DELETEME XXX
     // XXX QUESTION XXX Is the speed of the Teensy so slow that there's an appreciable time between when folks start rubbing and the output modules start get .display() being called? Why not just use "millis" directly rather than keeping track of when this was first called? Wouldn't output modules potentially get out of sync?
+    // NB: I'm almost always getting start times of 1ms, and the highest I've seen is 3ms
     if (this->pooferStartTime == 0) {
         this->pooferStartTime = millis;
         this->last_script_index = 0;
     }
     long pooferMillis = millis - this->pooferStartTime;
-    //DEBUG("Called Poofer::display at millis:", millis, " ; at pooferMillis:", pooferMillis, " ; and pooferStartTime:", this->pooferStartTime);
+//DEBUG("Called Poofer::display at millis:", millis, " ; at pooferMillis:", pooferMillis, " ; and pooferStartTime:", this->pooferStartTime);
     
     // Find current place in the list of script que points
     PooferScriptPoint curr_script_point = pooferScript[this->last_script_index];
-    for (int curr_script_index = this->last_script_index + 1; (pooferMillis >= pooferScript[curr_script_index].start_millis()); curr_script_index++) {
+DEBUG("Fetching existing poofer script point:", this->last_script_index);
+    for (int curr_script_index = this->last_script_index + 1;
+            (curr_script_index < POOFER_SCRIPT_LEN && pooferMillis >= pooferScript[curr_script_index].start_millis());
+            curr_script_index++) {
+DEBUG("Picking new poofer script point:", curr_script_index);
+        curr_script_point = pooferScript[curr_script_index];
+    }
+DEBUG("DONE picking poofer script point");
+    
+    //// Output the current script point
+    // Set the sparker output
+    if (curr_script_point.sparker_on()) {
+        // Maybe move this into a method
+        if (!this->sparkerEvent) {
+            this->sparkMaster();
+        }
+    } else {
+        // Maybe move this into a method
+        timer.stop(this->allsparkEvent);
+        timer.stop(singleSparkEvent);
+        this->allsparkEvent = 0;
+        if (this->sparkerEvent) {
+            this->poofComplete = true;
+            digitalWrite (this->POOFER_PIN, LOW);
+            digitalWrite (this->PILOT_PIN, LOW);
+            digitalWrite (this->SPARKER_PIN, LOW);
+            this->sparkerEvent = false;
+        }
+    }
+    // Set the pilot output
+    if (curr_script_point.pilot_on()) {
+        digitalWrite (this->PILOT_PIN, HIGH);
+    } else {
+        digitalWrite (this->PILOT_PIN, LOW);
+    }
+    // Set the poofer output
+
+DEBUG("DONE potentially enabling sparker");
+digitalWrite (6, HIGH);    // XXX DELETEME XXX
+//digitalWrite (this->POOFER_PIN, HIGH);    // XXX DELETEME XXX
+//digitalWrite (this->PILOT_PIN, HIGH);
+
+
+}
+
+void Poofer::display_configurable(long millis) {
+DEBUG("got to poofer display configurable");         // XXX DELETEME XXX
+    // XXX QUESTION XXX Is the speed of the Teensy so slow that there's an appreciable time between when folks start rubbing and the output modules start get .display() being called? Why not just use "millis" directly rather than keeping track of when this was first called? Wouldn't output modules potentially get out of sync?
+    // NB: I'm almost always getting start times of 1ms, and the highest I've seen is 3ms
+    if (this->pooferStartTime == 0) {
+        this->pooferStartTime = millis;
+        this->last_script_index = 0;
+    }
+    long pooferMillis = millis - this->pooferStartTime;
+//DEBUG("Called Poofer::display at millis:", millis, " ; at pooferMillis:", pooferMillis, " ; and pooferStartTime:", this->pooferStartTime);
+    
+    // Find current place in the list of script que points
+    PooferScriptPoint curr_script_point = pooferScript[this->last_script_index];
+    for (int curr_script_index = this->last_script_index + 1;
+            (curr_script_index < POOFER_SCRIPT_LEN && pooferMillis >= pooferScript[curr_script_index].start_millis());
+            curr_script_index++) {
+DEBUG("Picking new poofer script point:", curr_script_index);
         curr_script_point = pooferScript[curr_script_index];
     }
     
