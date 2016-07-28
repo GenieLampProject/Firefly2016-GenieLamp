@@ -165,10 +165,10 @@ int allsparkEvent = 0;
 int singleSparkEvent = 0;
 void SparkMaster() {     // XXX JGF XXX TODO XXX Move into Poofer::Spark()
     DEBUG("Called sparkMaster");
-    if (sparkerEvent = 0) {
+    if (sparkerEvent == 0) {
         allsparkEvent = t.every(SPARKER_OFF_TIME, Spark);
+        sparkerEvent = 1;
     }
-    sparkerEvent = 1;
 }
 
 void Spark() {     // XXX JGF XXX TODO XXX Move into Poofer::Spark()
@@ -584,7 +584,7 @@ void Poofer::display(long millis) {
 
 /** BEGIN Smoke Modules Definitions ***/
 void Smoke::setup() {
-        SMOKE_SERIAL.begin(9600);
+        SMOKE_SERIAL.begin(38400);
 }
 
 void Smoke::initialize() {
