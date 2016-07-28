@@ -23,11 +23,22 @@
  http://www.arduino.cc/en/Tutorial/SerialCallResponse
 
  */
+
 #include <DmxMaster.h>
-int firstSensor = 0;    // first analog sensor
-int secondSensor = 0;   // second analog sensor
-int thirdSensor = 0;    // digital sensor
-int inByte;         // incoming serial byte
+#define RED_DEFAULT 255
+#define GREEN_DEFAULT 69
+#define BLUE_DEFAULT 0
+//button stuff//
+const int buttonPin = 2;   
+
+int ledState = HIGH;         // the current state of the output pin
+int buttonState;             // the current reading from the input pin
+int lastButtonState = LOW;   // the previous reading from the input pin
+
+// the following variables are long's because the time, measured in miliseconds,
+// will quickly become a bigger number than can be stored in an int.
+long lastDebounceTime = 0;  // the last time the output pin was toggled
+long debounceDelay = 50;    // the debounce time; increase if the output flickers
 /**Light Stuff **/
 int red=0;
 int green=0;
@@ -37,8 +48,9 @@ int smoke = 0;
 boolean smokeON = false;
 int ledPin = 13;
 long smokeTime = 0;
-
+boolean buttonPressed = false;
 void setup() {
+    pinMode(buttonPin, INPUT);
 pinMode (ledPin, OUTPUT);
 digitalWrite (ledPin, LOW);
  /**DMX MASTER CODE**/
@@ -64,6 +76,8 @@ digitalWrite (ledPin, LOW);
 
 void loop() {
   // if we get a valid byte, read analog ins:
+  buttonPressed = checkButton();
+  if (!buttonPressed){
   if (Serial.available() > 0) {
     // get incoming byte:
     int smokeIn = Serial.parseInt();
@@ -117,6 +131,18 @@ void loop() {
   }
  // Serial.println(smokeON);
   }
+  else{
+        DmxMaster.write(2, RED_DEFAULT);
+    Serial.print("Red Brightness: ");
+    Serial.println(RED_DEFAULT);
+    DmxMaster.write(3, BLUE_DEFAULT);
+    Serial.print("Blue Brightness: ");
+    Serial.println(BLUE_DEFAULT);
+    DmxMaster.write(4, GREEN_DEFAULT);
+    Serial.print("Green Brightness: ");
+    Serial.println(GREEN_DEFAULT);
+  }
+}
 
 void establishContact() {
   while (Serial.available() <= 0) {
@@ -124,3 +150,36 @@ void establishContact() {
     delay(300);
   }
 }
+bool checkButton() {
+int reading = digitalRead(buttonPin);
+
+  // check to see if you just pressed the button 
+  // (i.e. the input went from LOW to HIGH),  and you've waited 
+  // long enough since the last press to ignore any noise:  
+
+  // If the switch changed, due to noise or pressing:
+  if (reading != lastButtonState) {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
+  } 
+  
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    // whatever the reading is at, it's been there for longer
+    // than the debounce delay, so take it as the actual current state:
+    buttonState = reading;
+  }
+  
+  // set the LED using the state of the button:
+
+ 
+
+  // save the reading.  Next time through the loop,
+  // it'll be the lastButtonState:
+  lastButtonState = reading;
+   if(buttonState == HIGH){
+    return true;
+ }
+ else{
+  return false;
+ }
+  }
