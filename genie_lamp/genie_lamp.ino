@@ -657,6 +657,7 @@ DEBUG("Fetching existing poofer script point:", this->last_script_index);
             curr_script_index++) {
 DEBUG("Picking new poofer script point:", curr_script_index);
         curr_script_point = pooferScript[curr_script_index];
+//digitalWrite (this->POOFER_PIN, HIGH);    // XXX DELETEME XXX
     }
 DEBUG("DONE picking poofer script point");
     
@@ -687,6 +688,12 @@ DEBUG("DONE picking poofer script point");
         digitalWrite (this->PILOT_PIN, LOW);
     }
     // Set the poofer output
+    if (curr_script_point.poofer_on()) {
+        digitalWrite (this->POOFER_PIN, HIGH);
+    } else {
+        digitalWrite (this->POOFER_PIN, LOW);
+    }
+    // Set the smoke output; to put in Smoke::display()
 
 DEBUG("DONE potentially enabling sparker");
 digitalWrite (6, HIGH);    // XXX DELETEME XXX
