@@ -72,37 +72,41 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
             sparker_is_on = false;
             pilot_is_on = false;
             poof_is_on = false;
+            intensity = 0;
         };
-        PooferScriptPoint(long millis, bool sparker, bool pilot, bool poofer) {
+        PooferScriptPoint(long millis, bool sparker, bool pilot, bool poofer, int smoke_intensity) {
             start_at_millis = millis;
             sparker_is_on = sparker;
             pilot_is_on = pilot;
             poof_is_on = poofer;
+            intensity = smoke_intensity;
         };
         long start_millis() { return start_at_millis; };
         bool sparker_on() { return sparker_is_on; };
         bool pilot_on() { return pilot_is_on; };
         bool poofer_on() { return poof_is_on; };
+        int curr_intensity() { return intensity; };   // XXX TODO XXX Move into SmokeScriptPoint struct
     private:
         long start_at_millis = -1;
         bool sparker_is_on = false;
         bool pilot_is_on = false;
         bool poof_is_on = false;
+        int intensity = 0;
 };
 PooferScriptPoint pooferScript[] = {
-    PooferScriptPoint(0, false, false, false),
-//    PooferScriptPoint(8000, false, true, false),    // NB: Unsafe to have propane going without an ignition source already going
-//    PooferScriptPoint(8250, true, true, false),
-    PooferScriptPoint(8000, true, true, false),       // NB: Switched so sparker comes on at same time as pilot; unsafe to have propane going without an ignition source already going
-    PooferScriptPoint(10000, true, true, true),
-    PooferScriptPoint(10100, true, true, false),
-    PooferScriptPoint(10500, true, true, true),
-    PooferScriptPoint(10700, true, true, false),
-    PooferScriptPoint(10900, true, true, true),
-    PooferScriptPoint(11200, true, true, false),
-    PooferScriptPoint(11400, true, true, true),
-    PooferScriptPoint(13000, true, false, false),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
-    PooferScriptPoint(15000, false, false, false)
+    PooferScriptPoint(0, false, false, false, 0),
+//    PooferScriptPoint(8000, false, true, false, 0),    // NB: Unsafe to have propane going without an ignition source already going
+//    PooferScriptPoint(8250, true, true, false, 0),
+    PooferScriptPoint(8000, true, true, false, 0),       // NB: Switched so sparker comes on at same time as pilot; unsafe to have propane going without an ignition source already going
+    PooferScriptPoint(10000, true, true, true, 122),
+    PooferScriptPoint(10100, true, true, false, 0),
+    PooferScriptPoint(10500, true, true, true, 120),
+    PooferScriptPoint(10700, true, true, false, 0),
+    PooferScriptPoint(10900, true, true, true, 200),
+    PooferScriptPoint(11200, true, true, false, 0),
+    PooferScriptPoint(11400, true, true, true, 255),
+    PooferScriptPoint(13000, true, false, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
+    PooferScriptPoint(15000, false, false, false, 0)
 };
 //#define SPARKER_OFF_TIME 500
 //#define SPARKER_ON_TIME 250
@@ -452,6 +456,7 @@ void Poofer::off(long touchEnded) {
             digitalWrite (this->PILOT_PIN, LOW);
         }
     }
+    this->last_script_index = 0;
 }
 
 void Poofer::display(long millis) {
@@ -647,12 +652,13 @@ void Poofer::display_configurable(long millis) {
     //DEBUG("Called Poofer::display at millis:", millis, " ; at pooferMillis:", pooferMillis, " ; and pooferStartTime:", this->pooferStartTime);
     
     // Find current place in the list of script que points
-    PooferScriptPoint curr_script_point = pooferScript[this->last_script_index]
+    PooferScriptPoint curr_script_point = pooferScript[this->last_script_index];
     for (int curr_script_index = this->last_script_index + 1; (pooferMillis >= pooferScript[curr_script_index].start_millis()); curr_script_index++) {
-        curr_script_point = pooferScript[curr_script_index]
+        curr_script_point = pooferScript[curr_script_index];
     }
     
-    // Output the current script point
+    //// Output the current script point
+    // Set the sparker output
     if (curr_script_point.sparker_on()) {
         // Maybe move this into a method
         if (!this->sparkerEvent) {
@@ -671,136 +677,34 @@ void Poofer::display_configurable(long millis) {
         }
         this->poofComplete = true;
     }
+    // Set the pilot output
     if (curr_script_point.pilot_on()) {
         digitalWrite (this->PILOT_PIN, HIGH);
     } else {
         digitalWrite (this->PILOT_PIN, LOW);
     }
+    // Set the poofer output
     if (curr_script_point.poofer_on()) {
         digitalWrite (this->POOFER_PIN, HIGH);
     } else {
         digitalWrite (this->POOFER_PIN, LOW);
     }
-
-/*    } else if (pooferMillis > FINAL_POOF_ON_MILLIS) {
-        this->intensity = 255;
-        SMOKE_SERIAL.print(this->intensity);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(this->intensity);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > LONG_POOF_OFF_MILLIS) {
-        SMOKE_SERIAL.print(0);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(0);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > LONG_POOF_ON_MILLIS) {
-        this->intensity = 200;
-        SMOKE_SERIAL.print(this->intensity);
-        COMM_PRINT("printed Poof: ");
-        Serial.println(this->intensity);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > MED_POOF_OFF_MILLIS) {
-        SMOKE_SERIAL.print(0);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(0);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > MED_POOF_ON_MILLIS) {
-        this->intensity = 120;
-        SMOKE_SERIAL.print(this->intensity);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(this->intensity);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > SHORT_POOF_OFF_MILLIS) {
-        SMOKE_SERIAL.print(0);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(0);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else if (pooferMillis > SHORT_POOF_ON_MILLIS) {
-        this->intensity = 122;
-        SMOKE_SERIAL.print(this->intensity);
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(this->intensity);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-    } else {
-          DEBUG("got to poofer else");
-    }       */
+    // Set the smoke output; to put in Smoke::display()
+    SMOKE_SERIAL.print(curr_script_point.curr_intensity());
+    COMM_PRINT("printed Poof: ");
+    COMM_PRINTLN(curr_script_point.curr_intensity());
+    SMOKE_SERIAL.print(",");
+    SMOKE_SERIAL.print(spoutRed);
+    COMM_PRINT("printed Red: ");
+    COMM_PRINTLN(spoutRed);
+    SMOKE_SERIAL.print(",");
+    SMOKE_SERIAL.print(this->spoutBlue);
+    COMM_PRINT("printed Blue: ");
+    COMM_PRINTLN(this->spoutBlue);
+    SMOKE_SERIAL.print(",");
+    SMOKE_SERIAL.println(this->spoutGreen);
+    COMM_PRINT("printed Green: ");
+    COMM_PRINTLN(this->spoutGreen);
 }
 
 
