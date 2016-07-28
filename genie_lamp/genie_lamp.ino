@@ -64,7 +64,7 @@ int8_t singleSparkEvent = 0;  // int8_t to match return Type of Timer.pulse()   
 
 
 /*** BEGIN Config ***/
-struct PooferScriptPoint
+struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer class when everything's going
 {
     public:
         PooferScriptPoint() {
@@ -101,7 +101,8 @@ PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(10900, true, true, true),
     PooferScriptPoint(11200, true, true, false),
     PooferScriptPoint(11400, true, true, true),
-    PooferScriptPoint(13000, true, true, false)
+    PooferScriptPoint(13000, true, false, false),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
+    PooferScriptPoint(15000, false, false, false)
 };
 //#define SPARKER_OFF_TIME 500
 //#define SPARKER_ON_TIME 250
@@ -204,6 +205,7 @@ class Poofer : public OutputBase
         virtual void initialize();
         virtual void off(long timeOff);
         virtual void display(long millis);
+        virtual void display_configurable(long millis);
         virtual void update();                  // NB: Unused
         virtual void spark();
         virtual void sparkMaster();
@@ -217,7 +219,7 @@ class Poofer : public OutputBase
         static const byte POOFER_PIN = 4;       // Same as Smoke.RED_PIN
 
         //// Runtime poofer data members
-        long pooferStartTime = 0;
+        long pooferStartTime = 0;     // When the poofer first started its script (in case the system is slow and it doesn't get control right away)
         bool sparkerEvent = false;
         int8_t pooferEvent = 0;       // int8_t to match return Type of Timer.pulse()
         int8_t allsparkEvent = 0;     // int8_t to match return Type of Timer.every()
@@ -226,6 +228,7 @@ class Poofer : public OutputBase
         long myMillis = 0;
         long totalMills = 0;          // NB: Unused
         long OffDiff = 0;
+        int last_script_index = 0;    // Last index the currently-running script que point was found at
 
         //// Runtime smoke data members
 //        int spoutRed;
@@ -614,6 +617,190 @@ void Poofer::display(long millis) {
               DEBUG("got to poofer else");
         }
     }
+}
+
+void Poofer::display_configurable(long millis) {
+/*
+ * when lamp is rubbed for (in millis):
+#define LED_START_MILLIS 2000 //Begin LEDS
+#define PILOT_START_MILLIS 8000 //open pilot solenoid
+#define SPARK_START_MILLIS 8250 //start spark ignitor (.5 second duty)
+#define SHORT_POOF_ON_MILLIS 10000//open poof solenoid
+#define SHORT_POOF_OFF_MILLIS 10100//close poof solenoid
+#define MED_POOF_ON_MILLIS 10500//open poof solenoid
+#define MED_POOF_OFF_MILLIS 10700//close poof solenoid
+#define LONG_POOF_ON_MILLIS 10900//open poof solenoid
+#define LONG_POOF_OFF_MILLIS 11200//close poof solenoid
+#define FINAL_POOF_ON_MILLIS 11400//open poof solenoid
+#define FINAL_POOF_OFF_MILLIS 13000//close poof solenoid
+ * when lamp NOT rubbed for:
+#define LED_END_MILLIS 500 //Begin LED Fade
+#define SPARK_END_MILLIS 2000 //stop spark ignitor
+#define SPARK_END_MILLIS 3000//stop pilot solenoid
+ */
+    // XXX QUESTION XXX Is the speed of the Teensy so slow that there's an appreciable time between when folks start rubbing and the output modules start get .display() being called? Why not just use "millis" directly rather than keeping track of when this was first called? Wouldn't output modules potentially get out of sync?
+    if (this->pooferStartTime == 0) {
+        this->pooferStartTime = millis;
+        this->last_script_index = 0;
+    }
+    long pooferMillis = millis - this->pooferStartTime;
+    //DEBUG("Called Poofer::display at millis:", millis, " ; at pooferMillis:", pooferMillis, " ; and pooferStartTime:", this->pooferStartTime);
+    
+    // Find current place in the list of script que points
+    PooferScriptPoint curr_script_point = pooferScript[this->last_script_index]
+    for (int curr_script_index = this->last_script_index + 1; (pooferMillis >= pooferScript[curr_script_index].start_millis()); curr_script_index++) {
+        curr_script_point = pooferScript[curr_script_index]
+    }
+    
+    // Output the current script point
+    if (curr_script_point.sparker_on()) {
+        // Maybe move this into a method
+        if (!this->sparkerEvent) {
+            this->sparkMaster();
+        }
+    } else {
+        // Maybe move this into a method
+        digitalWrite (this->SPARKER_PIN, LOW);
+        timer.stop(this->allsparkEvent);
+        timer.stop(singleSparkEvent);
+        this->allsparkEvent = 0;
+        digitalWrite (this->SPARKER_PIN, LOW);
+        this->sparkerEvent = false;
+        if (this->OffDiff > PILOT_END_MILLIS) {
+            digitalWrite (this->PILOT_PIN, LOW);
+        }
+        this->poofComplete = true;
+    }
+    if (curr_script_point.pilot_on()) {
+        digitalWrite (this->PILOT_PIN, HIGH);
+    } else {
+        digitalWrite (this->PILOT_PIN, LOW);
+    }
+    if (curr_script_point.poofer_on()) {
+        digitalWrite (this->POOFER_PIN, HIGH);
+    } else {
+        digitalWrite (this->POOFER_PIN, LOW);
+    }
+
+/*    } else if (pooferMillis > FINAL_POOF_ON_MILLIS) {
+        this->intensity = 255;
+        SMOKE_SERIAL.print(this->intensity);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(this->intensity);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > LONG_POOF_OFF_MILLIS) {
+        SMOKE_SERIAL.print(0);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(0);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > LONG_POOF_ON_MILLIS) {
+        this->intensity = 200;
+        SMOKE_SERIAL.print(this->intensity);
+        COMM_PRINT("printed Poof: ");
+        Serial.println(this->intensity);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > MED_POOF_OFF_MILLIS) {
+        SMOKE_SERIAL.print(0);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(0);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > MED_POOF_ON_MILLIS) {
+        this->intensity = 120;
+        SMOKE_SERIAL.print(this->intensity);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(this->intensity);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > SHORT_POOF_OFF_MILLIS) {
+        SMOKE_SERIAL.print(0);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(0);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else if (pooferMillis > SHORT_POOF_ON_MILLIS) {
+        this->intensity = 122;
+        SMOKE_SERIAL.print(this->intensity);
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(this->intensity);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+    } else {
+          DEBUG("got to poofer else");
+    }       */
 }
 
 
