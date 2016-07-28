@@ -64,6 +64,52 @@ int8_t singleSparkEvent = 0;  // int8_t to match return Type of Timer.pulse()   
 
 
 /*** BEGIN Config ***/
+struct PooferScriptPoint
+{
+    public:
+        PooferScriptPoint() {
+            start_at_millis = -1;
+            sparker_is_on = false;
+            pilot_is_on = false;
+            poof_is_on = false;
+        };
+        PooferScriptPoint(long millis, bool sparker, bool pilot, bool poofer) {
+            start_at_millis = millis;
+            sparker_is_on = sparker;
+            pilot_is_on = pilot;
+            poof_is_on = poofer;
+        };
+        long start_millis() { return start_at_millis; };
+        bool sparker_on() { return sparker_is_on; };
+        bool pilot_on() { return pilot_is_on; };
+        bool poofer_on() { return poof_is_on; };
+    private:
+        long start_at_millis = -1;
+        bool sparker_is_on = false;
+        bool pilot_is_on = false;
+        bool poof_is_on = false;
+};
+PooferScriptPoint pooferScript[] = {
+    PooferScriptPoint(0, false, false, false),
+//    PooferScriptPoint(8000, false, true, false),    // NB: Unsafe to have propane going without an ignition source already going
+//    PooferScriptPoint(8250, true, true, false),
+    PooferScriptPoint(8000, true, true, false),       // NB: Switched so sparker comes on at same time as pilot; unsafe to have propane going without an ignition source already going
+    PooferScriptPoint(10000, true, true, true),
+    PooferScriptPoint(10100, true, true, false),
+    PooferScriptPoint(10500, true, true, true),
+    PooferScriptPoint(10700, true, true, false),
+    PooferScriptPoint(10900, true, true, true),
+    PooferScriptPoint(11200, true, true, false),
+    PooferScriptPoint(11400, true, true, true),
+    PooferScriptPoint(13000, true, true, false)
+};
+//#define SPARKER_OFF_TIME 500
+//#define SPARKER_ON_TIME 250
+///* when lamp NOT rubbed for: */
+//#define SPARK_END_MILLIS 2000 //stop spark ignitor
+//#define PILOT_END_MILLIS 3000//stop pilot solenoid
+
+
 /* when lamp is rubbed for (in millis):*/
 #define LED_START_MILLIS 2000 //Begin LEDS
 #define PILOT_START_MILLIS 8000 //open pilot solenoid
