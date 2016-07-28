@@ -60,6 +60,7 @@ int spoutRed;             // XXX TODO XXX Modularize
 long timeCalled = 0;      // XXX TODO XXX Move to appropriate scope
 long timeCalledEnd = 0;   // XXX TODO XXX Move to appropriate scope
 int8_t singleSparkEvent = 0;  // int8_t to match return Type of Timer.pulse()   // XXX TODO XXX Move to appropriate scope
+bool sparking = false;      // Safeguard for now
 /*** FINISH Globals ***/
 
 
@@ -96,9 +97,8 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
 // MUST update POOFER_SCRIPT_LEN when adding or removing script points
 PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(0, false, false, false, 0),
-//    PooferScriptPoint(8000, false, true, false, 0),    // NB: Unsafe to have propane going without an ignition source already going
-//    PooferScriptPoint(8250, true, true, false, 0),
-    PooferScriptPoint(8000, true, true, false, 0),       // NB: Switched so sparker comes on at same time as pilot; unsafe to have propane going without an ignition source already going
+    PooferScriptPoint(8000, true, false, false, 0),
+    PooferScriptPoint(8250, true, true, false, 0),
     PooferScriptPoint(10000, true, true, true, 122),
     PooferScriptPoint(10100, true, true, false, 0),
     PooferScriptPoint(10500, true, true, true, 120),
@@ -110,7 +110,7 @@ PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(15000, false, false, false, 0)
 };
 // UPDATEME WITH THE LENGTH OF THE SCRIPT ABOVE
-byte POOFER_SCRIPT_LEN = 11;
+byte POOFER_SCRIPT_LEN = 12;
 //#define SPARKER_OFF_TIME 500
 //#define SPARKER_ON_TIME 250
 ///* when lamp NOT rubbed for: */
@@ -459,10 +459,11 @@ void Poofer::off(long touchEnded) {
         this->allsparkEvent = 0;
         timer.stop(this->allsparkEvent);
         timer.stop(singleSparkEvent);
-        digitalWrite (this->SPARKER_PIN, LOW);
         this->sparkerEvent = false;
     }
     this->last_script_index = 0;
+    sparking = false;
+    digitalWrite (this->SPARKER_PIN, LOW);
 }
 
 //void Poofer::display(long millis) {
@@ -664,12 +665,16 @@ DEBUG("DONE picking poofer script point");
     //// Output the current script point
     // Set the sparker output
     if (curr_script_point.sparker_on()) {
+digitalWrite (6, LOW);    // XXX DELETEME XXX
         // Maybe move this into a method
+        sparking = true;
         if (!this->sparkerEvent) {
             this->sparkMaster();
         }
     } else {
+digitalWrite (6, HIGH);    // XXX DELETEME XXX
         // Maybe move this into a method
+        sparking = false;
         timer.stop(this->allsparkEvent);
         timer.stop(singleSparkEvent);
         this->allsparkEvent = 0;
@@ -677,9 +682,9 @@ DEBUG("DONE picking poofer script point");
             this->poofComplete = true;
             digitalWrite (this->POOFER_PIN, LOW);
             digitalWrite (this->PILOT_PIN, LOW);
-            digitalWrite (this->SPARKER_PIN, LOW);
             this->sparkerEvent = false;
         }
+        digitalWrite (this->SPARKER_PIN, LOW);
     }
     // Set the pilot output
     if (curr_script_point.pilot_on()) {
@@ -695,10 +700,7 @@ DEBUG("DONE picking poofer script point");
     }
     // Set the smoke output; to put in Smoke::display()
 
-DEBUG("DONE potentially enabling sparker");
-digitalWrite (6, HIGH);    // XXX DELETEME XXX
-//digitalWrite (this->POOFER_PIN, HIGH);    // XXX DELETEME XXX
-//digitalWrite (this->PILOT_PIN, HIGH);
+//digitalWrite (6, HIGH);    // XXX DELETEME XXX
 
 
 }
@@ -777,7 +779,11 @@ DEBUG("Picking new poofer script point:", curr_script_index);
 // Helper callback to match the Timer.h 
 void spark_callback() {
     DEBUG("Called spark");
-    singleSparkEvent = timer.pulse(Poofer::SPARKER_PIN, SPARKER_ON_TIME, HIGH);
+    if (sparking) {
+        singleSparkEvent = timer.pulse(Poofer::SPARKER_PIN, SPARKER_ON_TIME, HIGH);
+    } else {
+        digitalWrite (Poofer::SPARKER_PIN, LOW);
+    }
 }
 
 void Poofer::spark() {       // XXX JGF XXX TODO XXX Get Timer.h library playing nice with classes and replace spark_callback() XXX TODO XXX JGF XXX
