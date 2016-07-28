@@ -65,8 +65,7 @@ digitalWrite (ledPin, LOW);
 ** highest channel you DmxMaster.write() to. */
   DmxMaster.maxChannel(512);
  /**COMMUNICATIONS CODE**/
-  // start serial port at 9600 bps:
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
