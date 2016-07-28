@@ -601,7 +601,7 @@ void Poofer::poof(long duration) {          // NB: Unused
 
 /** BEGIN Smoke Modules Definitions ***/
 void Smoke::setup() {
-        SMOKE_SERIAL.begin(9600);
+        SMOKE_SERIAL.begin(38400);
 }
 
 void Smoke::initialize() {
