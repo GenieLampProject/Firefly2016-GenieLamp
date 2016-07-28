@@ -587,8 +587,8 @@ void Poofer::sparkMaster() {
     if (!this->sparkerEvent) {
         this->allsparkEvent = timer.every(SPARKER_OFF_TIME, spark_callback);
 //        this->allsparkEvent = timer.every(SPARKER_OFF_TIME, this->spark);       // XXX JGF XXX TODO XXX Get Timer.h library playing nice with classes and replace spark_callback() XXX TODO XXX JGF XXX
+        this->sparkerEvent = true;
     }
-    this->sparkerEvent = true;
 }
 
 void Poofer::poof(long duration) {          // NB: Unused
