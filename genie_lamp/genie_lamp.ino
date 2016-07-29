@@ -101,13 +101,13 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
         bool sparker_is_on = false;
         bool pilot_is_on = false;
         bool poof_is_on = false;
-        int intensity = 0;
+        int intensity = 0;   // XXX TODO XXX Move into SmokeScriptPoint struct
 };
 // MUST update POOFER_SCRIPT_LEN when adding or removing script points
 PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(0, false, false, false, 0),
-    PooferScriptPoint(8000, true, false, false, 0),
-    PooferScriptPoint(8250, true, true, false, 0),
+    PooferScriptPoint(7500, true, false, false, 0),
+    PooferScriptPoint(8000, true, true, false, 0),
     PooferScriptPoint(10000, true, true, true, 122),
     PooferScriptPoint(10100, true, true, false, 0),
     PooferScriptPoint(10500, true, true, true, 120),
@@ -246,11 +246,15 @@ class Poofer : public OutputBase
         long OffDiff = 0;
         int last_script_index = 0;    // Last index the currently-running script que point was found at
 
+        //// Smkoe constants
+        static const byte SMOKE_SIGNAL_FREQUENCY = 100;    // Don't overload the serial connections by sending more than 1 change every 100ms
+
         //// Runtime smoke data members
 //        int spoutRed;
         int spoutBlue;     // NB: Never assigned
         int spoutGreen;    // NB: Never assigned
         int intensity;
+        long last_sent_smoke_signal = -1;
 };
 
 class BodyLEDs : public OutputBase
@@ -713,22 +717,29 @@ void Poofer::display_NotToUse(long millis) {
         digitalWrite (this->POOFER_PIN, LOW);
     }
     // Set the smoke output; to put in Smoke::display()
-    SMOKE_SERIAL.print(curr_script_point.curr_intensity());
-    COMM_PRINT("printed Poof: ");
-    COMM_PRINTLN(curr_script_point.curr_intensity());
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(spoutRed);
-    COMM_PRINT("printed Red: ");
-    COMM_PRINTLN(spoutRed);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutBlue);
-    COMM_PRINT("printed Blue: ");
-    COMM_PRINTLN(this->spoutBlue);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.println(this->spoutGreen);
-    COMM_PRINT("printed Green: ");
-    COMM_PRINTLN(this->spoutGreen);
-    delay(10);
+    if (this->last_sent_smoke_signal > pooferMillis) {
+        this->last_sent_smoke_signal = -1;
+    }
+    if (this->last_sent_smoke_signal >=0 &&
+            (pooferMillis - this->last_sent_smoke_signal >= this->SMOKE_SIGNAL_FREQUENCY)) {
+        this->last_sent_smoke_signal = pooferMillis;
+        SMOKE_SERIAL.print(curr_script_point.curr_intensity());
+        COMM_PRINT("printed Poof: ");
+        COMM_PRINTLN(curr_script_point.curr_intensity());
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(spoutRed);
+        COMM_PRINT("printed Red: ");
+        COMM_PRINTLN(spoutRed);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.print(this->spoutBlue);
+        COMM_PRINT("printed Blue: ");
+        COMM_PRINTLN(this->spoutBlue);
+        SMOKE_SERIAL.print(",");
+        SMOKE_SERIAL.println(this->spoutGreen);
+        COMM_PRINT("printed Green: ");
+        COMM_PRINTLN(this->spoutGreen);
+        delay(10);
+    }
 }
 
 
