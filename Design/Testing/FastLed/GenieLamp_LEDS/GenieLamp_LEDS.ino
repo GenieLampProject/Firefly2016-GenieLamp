@@ -14,14 +14,16 @@ FASTLED_USING_NAMESPACE
 #if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)
 #warning "Requires FastLED 3.1 or later; check github for latest code."
 #endif
+#define DATA_PIN 21
+#define LED_LEFT_PIN 22
+#define LED_LEFT_PIN 21
 
-#define DATA_PIN    23
 //#define CLK_PIN   4
 #define LED_TYPE    WS2812
 #define COLOR_ORDER RGB
 #define NUM_LEDS    64
-CRGB leds[NUM_LEDS];
-
+CRGB ledsL[NUM_LEDS];
+CRGB ledsR[NUM_LEDS];
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
 
@@ -35,7 +37,8 @@ void setup() {
    Serial.begin(38400);
   
   // tell FastLED about the LED strip configuration
-  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_LEFT_PIN,COLOR_ORDER>(ledsL, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<LED_TYPE,LED_LEFT_PIN,COLOR_ORDER>(ledsR, NUM_LEDS).setCorrection(TypicalLEDStrip);
   //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
   // set master brightness control
@@ -56,7 +59,11 @@ void redFade(){
   long brightCalc = map(millis(), timeCalled, timeEnd, 0, 255);
   for(int i = 0; i < NUM_LEDS; i++ )
    {
-   leds[i].setRGB(0,255,0);  // setRGB functions works by setting
+   ledsL[i].setRGB(0,255,0);  // setRGB functions works by setting
+                             // (RED value 0-255, GREEN value 0-255, BLUE value 0-255)
+                             // RED = setRGB(255,0,0)
+                             // GREEN = setRGB(0,255,0)
+   ledsR[i].setRGB(0,255,0);  // setRGB functions works by setting
                              // (RED value 0-255, GREEN value 0-255, BLUE value 0-255)
                              // RED = setRGB(255,0,0)
                              // GREEN = setRGB(0,255,0)
@@ -75,9 +82,11 @@ void redFade(){
 void sinelon()
 {
   // a colored dot sweeping back and forth, with fading trails
-  fadeToBlackBy( leds, NUM_LEDS, 20);
+  fadeToBlackBy(ledsR, NUM_LEDS, 20);
+    fadeToBlackBy(ledsL, NUM_LEDS, 20);
   int pos = beatsin16(13,0,NUM_LEDS);
-  leds[pos] += CHSV( gHue, 255, 192);
+  ledsR[pos] += CHSV( gHue, 255, 192);
+  ledsL[pos] += CHSV( gHue, 255, 192);
 }
  /*
   brightness = brightness + fadeAmount;
