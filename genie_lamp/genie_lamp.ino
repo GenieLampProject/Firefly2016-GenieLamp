@@ -11,6 +11,7 @@
 #include <SerialDebug.h>
 #include "Timer.h"
 #include "FastLED.h"
+#include <EasyTransfer.h>
 
 
 
@@ -77,10 +78,24 @@ long timeCalled = 0;      // XXX TODO XXX Move to appropriate scope
 long timeCalledEnd = 0;   // XXX TODO XXX Move to appropriate scope
 int8_t singleSparkEvent = 0;  // int8_t to match return Type of Timer.pulse()   // XXX TODO XXX Move to appropriate scope
 bool sparking = false;      // Safeguard for now
+//communication
+EasyTransfer ET; 
+
 /*** FINISH Globals ***/
 
 
 /*** BEGIN Config ***/
+struct SEND_DATA_STRUCTURE{
+  //put your variable definitions here for the data you want to send
+  //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
+  int smokeSend;
+  int redSend;
+  int blueSend;
+  int greenSend;
+};
+//give a name to the group of data
+SEND_DATA_STRUCTURE mydata;
+
 struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer class when everything's going
 {
     public:
@@ -463,20 +478,20 @@ void Poofer::off(long touchEnded) {
 #ifdef JGF_DEBUG
     digitalWrite (TEST_PIN, LOW);
 #endif
-    SMOKE_SERIAL.print(0);
+    //SMOKE_SERIAL.print(0);
     COMM_PRINT("printed poof: ");
     COMM_PRINTLN(0);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(spoutRed);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(spoutRed);
     COMM_PRINT("printed Red: ");
     COMM_PRINTLN(spoutRed);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutBlue);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutBlue);
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutGreen);
-    SMOKE_SERIAL.print('\n');
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutGreen);
+    //SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
     timer.stop(this->pooferEvent);
@@ -531,131 +546,152 @@ void Poofer::display(long millis) {
         } else if (this->myMillis > FINAL_POOF_ON_MILLIS) {
             digitalWrite (this->POOFER_PIN, HIGH);
             this->intensity = 255;
-            SMOKE_SERIAL.print(this->intensity);
+            //SMOKE_SERIAL.print(this->intensity);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(this->intensity);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > LONG_POOF_OFF_MILLIS) {
             digitalWrite (this->POOFER_PIN, LOW);
-            SMOKE_SERIAL.print(0);
+            //SMOKE_SERIAL.print(0);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(0);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > LONG_POOF_ON_MILLIS) {
             digitalWrite (this->POOFER_PIN, HIGH);
             this->intensity = 200;
-            SMOKE_SERIAL.print(this->intensity);
+            //SMOKE_SERIAL.print(this->intensity);
             COMM_PRINT("printed Poof: ");
             Serial.println(this->intensity);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > MED_POOF_OFF_MILLIS) {
             digitalWrite (this->POOFER_PIN, LOW);
-            SMOKE_SERIAL.print(0);
+            //SMOKE_SERIAL.print(0);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(0);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > MED_POOF_ON_MILLIS) {
             digitalWrite (this->POOFER_PIN, HIGH);
             this->intensity = 120;
-            SMOKE_SERIAL.print(this->intensity);
+            //SMOKE_SERIAL.print(this->intensity);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(this->intensity);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SHORT_POOF_OFF_MILLIS) {
             digitalWrite (this->POOFER_PIN, LOW);
-            SMOKE_SERIAL.print(0);
+            //SMOKE_SERIAL.print(0);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(0);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SHORT_POOF_ON_MILLIS) {
             digitalWrite (this->PILOT_PIN, HIGH);
             this->intensity = 122;
-            SMOKE_SERIAL.print(this->intensity);
+            //SMOKE_SERIAL.print(this->intensity);
             COMM_PRINT("printed Poof: ");
             COMM_PRINTLN(this->intensity);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(spoutRed);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(spoutRed);
+            mydata.redSend = spoutRed;
             COMM_PRINT("printed Red: ");
             COMM_PRINTLN(spoutRed);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutBlue);
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutBlue);
+            mydata.blueSend = this->spoutBlue;
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
-            SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.print(this->spoutGreen);
-            SMOKE_SERIAL.print('\n');
+            //SMOKE_SERIAL.print(",");
+            //SMOKE_SERIAL.print(this->spoutGreen);
+            mydata.greenSend = this->spoutGreen;
+            //SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SPARK_START_MILLIS) {
@@ -744,23 +780,27 @@ void Poofer::display_NotToUse(long millis) {
     if (this->last_sent_smoke_signal >=0 &&
             (pooferMillis - this->last_sent_smoke_signal >= this->SMOKE_SIGNAL_FREQUENCY)) {
         this->last_sent_smoke_signal = pooferMillis;
-        SMOKE_SERIAL.print(curr_script_point.curr_intensity());
+        //SMOKE_SERIAL.print(curr_script_point.curr_intensity());
+        mydata.smokeSend = curr_script_point.curr_intensity();
         COMM_PRINT("printed Poof: ");
         COMM_PRINTLN(curr_script_point.curr_intensity());
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(spoutRed);
+        //SMOKE_SERIAL.print(",");
+        //SMOKE_SERIAL.print(spoutRed);
+        mydata.redSend = spoutRed;
         COMM_PRINT("printed Red: ");
         COMM_PRINTLN(spoutRed);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutBlue);
+        //SMOKE_SERIAL.print(",");
+        //SMOKE_SERIAL.print(this->spoutBlue);
+        mydata.blueSend = this->spoutBlue;
         COMM_PRINT("printed Blue: ");
         COMM_PRINTLN(this->spoutBlue);
-        SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.print(this->spoutGreen);
-        SMOKE_SERIAL.print('\n');
+        //SMOKE_SERIAL.print(",");
+        //SMOKE_SERIAL.print(this->spoutGreen);
+        mydata.greenSend = this->spoutGreen;
+        //SMOKE_SERIAL.print('\n');
         COMM_PRINT("printed Green: ");
         COMM_PRINTLN(this->spoutGreen);
-        delay(10);
+        ET.sendData();
     }
 }
 
@@ -800,7 +840,8 @@ void Poofer::poof(long duration) {          // NB: Unused
 /** BEGIN Smoke Modules Definitions ***/
 void Smoke::setup() {
         COMM_BEGIN(38400);
-        SMOKE_SERIAL.begin(19200);
+        //SMOKE_SERIAL.begin(19200);
+
 }
 
 void Smoke::initialize() {
@@ -815,40 +856,41 @@ void Smoke::update() {                   // NB: Unused
 void Smoke::off(long touchEnded) {
     //SPARK_END_MILLIS 2000 //stop spark ignitor
     //PILOT_END_MILLIS 3000//stop pilot solenoid
-    SMOKE_SERIAL.print(0);
+    //SMOKE_SERIAL.print(0);
     COMM_PRINT("printed Poof: ");
     COMM_PRINTLN(0);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(spoutRed);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(spoutRed);
+    mydata.redSend = spoutRed;
     COMM_PRINT("printed Red: ");
     COMM_PRINTLN(spoutRed);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutBlue);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutBlue);
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutGreen);
-    SMOKE_SERIAL.print('\n');
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutGreen);
+    //SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
 }
 
 void Smoke::display(long millis) {
     this->intensity = 255;
-    SMOKE_SERIAL.print(this->intensity);
+    //SMOKE_SERIAL.print(this->intensity);
     COMM_PRINT("printed Poof: ");
     COMM_PRINTLN(this->intensity);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(spoutRed);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(spoutRed);
     COMM_PRINT("printed Red: ");
     COMM_PRINTLN(spoutRed);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutBlue);
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutBlue);
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
-    SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.print(this->spoutGreen);
-    SMOKE_SERIAL.print('\n');
+    //SMOKE_SERIAL.print(",");
+    //SMOKE_SERIAL.print(this->spoutGreen);
+    //SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
 }
@@ -947,6 +989,8 @@ BodyLEDs* bodyLEDs;
 
 /*** BEGIN Setup Routine ***/
 void setup() {
+   Serial2.begin(19200);
+   ET.begin(details(mydata), &Serial2);
   //write the onbard LED HIGH in order to show it is working
   pinMode(HELLO_PIN,OUTPUT);
   digitalWrite(HELLO_PIN, HIGH);

@@ -1,5 +1,20 @@
 #include <SoftwareSerial.h>
+#include <EasyTransfer.h>
 
+//create object
+EasyTransfer ET; 
+
+struct RECEIVE_DATA_STRUCTURE{
+  //put your variable definitions here for the data you want to receive
+  //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
+  int smokeSend;
+  int redSend;
+  int blueSend;
+  int greenSend;
+};
+
+//give a name to the group of data
+RECEIVE_DATA_STRUCTURE mydata;
 /*
   Serial Call and Response
  Language: Wiring/Arduino
@@ -28,7 +43,7 @@
  /**BEGIN Debug toggles**/
 // uncomment the following to disable serial debug statements
 //#define SERIAL_DEBUG false
-#define SOFTWARE_SERIAL
+// #define SOFTWARE_SERIAL
 /**END Debug toggles**/
 
 /**BEGIN Includes**/
@@ -100,7 +115,8 @@ digitalWrite (ledPin, LOW);
   SERIAL_DEBUG_SETUP(38400);
   SWSERIAL_BEGIN(19200);
   HWSERIAL_BEGIN(19200);
-  SERIAL_CHOICE.setTimeout(100);
+  ET.begin(details(mydata), &Serial);
+  //SERIAL_CHOICE.setTimeout(100);
 
  // establishContact();  // send a byte to establish contact until receiver responds
 }
@@ -110,18 +126,21 @@ void loop() {
   buttonPressed = checkButton();
  DEBUG("buttonPressed",buttonPressed);
   if (buttonPressed == 0){
-  if (SERIAL_CHOICE.available() > 0) {
-    DEBUG("Serial Available",SERIAL_CHOICE.available());
+  if(ET.receiveData()){
+    DEBUG("Serial Available");
     // get incoming byte:
-    int smokeIn = SERIAL_CHOICE.parseInt();
+    //int smokeIn = SERIAL_CHOICE.parseInt();
+      int smokeIn = mydata.smokeSend;
+  int redIn = mydata.redSend;
+  int blueIn = mydata.blueSend;
+  int greenIn = mydata.greenSend;
     DEBUG("parse smoke");
-    int redIn = SERIAL_CHOICE.parseInt();
+    //int redIn = SERIAL_CHOICE.parseInt();
         DEBUG("parse red");
-    int greenIn = SERIAL_CHOICE.parseInt();
+    //int greenIn = SERIAL_CHOICE.parseInt();
             DEBUG("parse green");
-    int blueIn = SERIAL_CHOICE.parseInt();
+    //int blueIn = SERIAL_CHOICE.parseInt();
             DEBUG("parse blue");
-     if (SERIAL_CHOICE.read() == '\n') {
       digitalWrite (ledPin, HIGH);
       if (redIn == red && blueIn == blue && greenIn == green && smokeIn == smoke){
       bool noChange = true;
@@ -134,44 +153,14 @@ void loop() {
       smoke = smokeIn;
       DEBUG("change detected ");
     DEBUG("smoke intensity: ",smoke,"Red Brightness: ",red,"Blue Brightness: ",blue,"Green Brightness: ",green);
+  }
+    DmxMaster.write(1, smoke);
     DmxMaster.write(2, red);
     DmxMaster.write(3, blue);
     DmxMaster.write(4, green);
-    if (smokeON == true){
-      if(smoke > 0){
-    DmxMaster.write(1, 255);
-    DEBUG("machine still poofing",smokeON);
-   // digitalWrite (ledPin, HIGH);
-      }
-      else{
-      red = red-1;
-      blue = blue-1;
-      green = green-1;
-      smoke = smoke-1;
-    DmxMaster.write(1, 0);
-    DmxMaster.write(2, 0);
-    DmxMaster.write(3, 0);
-    DmxMaster.write(3, 0);
-    DEBUG("machine stopped poofing",smokeON);
-  //  digitalWrite (ledPin, LOW);
-    smokeON = false;
-      }
-    }
-   else {
-      if (smoke > 0){
-        DmxMaster.write(1, smoke);
-    DEBUG("machine On poofing", smokeON);
-  //  digitalWrite (ledPin, HIGH);
-    smokeON = true;
-      }
-    }
-    }
-    }// this
-    else{
-      digitalWrite (ledPin, LOW);
-    }
   }
   else {
+    digitalWrite (ledPin, LOW);
     DEBUG("serial not available");
   }
  // DEBUG(smokeON);
