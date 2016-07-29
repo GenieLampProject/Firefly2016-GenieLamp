@@ -25,15 +25,40 @@
  http://www.arduino.cc/en/Tutorial/SerialCallResponse
 
  */
+ /**BEGIN Debug toggles**/
 // uncomment the following to disable serial debug statements
 //#define SERIAL_DEBUG false
+#define SOFTWARE_SERIAL
+/**END Debug toggles**/
 
+/**BEGIN Includes**/
 #include <SerialDebug.h>
 #include <DmxMaster.h>
+/**END Includes**/
+ 
+/**BEGIN Testing Macros**/
+#ifdef SOFTWARE_SERIAL
+#define SWSERIAL_DECLARE SoftwareSerial mySerial(10, 11)
+#define SWSERIAL_BEGIN(x) mySerial.begin(x)
+#define HWSERIAL_BEGIN(x)
+#define SERIAL_DEBUG true
+#define SERIAL_CHOICE mySerial
+#else
+#define SWSERIAL_DECLARE
+#define SWSERIAL_BEGIN(x)
+#define HWSERIAL_BEGIN(x) Serial.begin(x)
+#define SERIAL_CHOICE Serial
+#define SERIAL_DEBUG false
+#endif
+/**END Testing Macros**/
+
+
+
 #define RED_DEFAULT 255
 #define GREEN_DEFAULT 69
 #define BLUE_DEFAULT 0
-SoftwareSerial mySerial(10, 11); // RX, TX
+ // RX, TX
+SWSERIAL_DECLARE;
 //button stuff//
 const int buttonPin = 2;   
 const int inputPin = 4;  
@@ -72,11 +97,10 @@ digitalWrite (ledPin, LOW);
 ** highest channel you DmxMaster.write() to. */
   DmxMaster.maxChannel(512);
  /**COMMUNICATIONS CODE**/
-
-  mySerial.begin(19200);
-  mySerial.setTimeout(1000);
-  Serial.begin(19200);
-  Serial.setTimeout(1000);
+  SERIAL_DEBUG_SETUP(38400);
+  SWSERIAL_BEGIN(19200);
+  HWSERIAL_BEGIN(19200);
+  SERIAL_CHOICE.setTimeout(100);
 
  // establishContact();  // send a byte to establish contact until receiver responds
 }
@@ -86,18 +110,18 @@ void loop() {
   buttonPressed = checkButton();
  DEBUG("buttonPressed",buttonPressed);
   if (buttonPressed == 0){
-  if (mySerial.available() > 0) {
-    DEBUG("Serial Available",mySerial.available());
+  if (SERIAL_CHOICE.available() > 0) {
+    DEBUG("Serial Available",SERIAL_CHOICE.available());
     // get incoming byte:
-    int smokeIn = mySerial.parseInt();
+    int smokeIn = SERIAL_CHOICE.parseInt();
     DEBUG("parse smoke");
-    int redIn = mySerial.parseInt();
+    int redIn = SERIAL_CHOICE.parseInt();
         DEBUG("parse red");
-    int greenIn = mySerial.parseInt();
+    int greenIn = SERIAL_CHOICE.parseInt();
             DEBUG("parse green");
-    int blueIn = mySerial.parseInt();
+    int blueIn = SERIAL_CHOICE.parseInt();
             DEBUG("parse blue");
-     if (mySerial.read() == '\n') {
+     if (SERIAL_CHOICE.read() == '\n') {
       digitalWrite (ledPin, HIGH);
       if (redIn == red && blueIn == blue && greenIn == green && smokeIn == smoke){
       bool noChange = true;
@@ -162,8 +186,8 @@ void loop() {
 }
 /*
 void establishContact() {
-  while (mySerial.available() <= 0) {
-    mySerial.print('A');   // send a capital A
+  while (SERIAL_CHOICE.available() <= 0) {
+    SERIAL_CHOICE.print('A');   // send a capital A
     delay(300);
   }
 }
