@@ -13,7 +13,7 @@
  * potentiometers attached to analog inputs 0 and 1
  * pushbutton attached to digital I/O 2
 
- Created 26 Sept. 2005
+ Created 26 Sept. 2005z
  by Tom Igoe
  modified 24 April 2012
  by Tom Igoe and Scott Fitzgerald
@@ -23,14 +23,16 @@
  http://www.arduino.cc/en/Tutorial/SerialCallResponse
 
  */
-
+// uncomment the following to disable serial debug statements
+#define SERIAL_DEBUG false
+#include <SerialDebug.h>
 #include <DmxMaster.h>
 #define RED_DEFAULT 255
 #define GREEN_DEFAULT 69
 #define BLUE_DEFAULT 0
 //button stuff//
 const int buttonPin = 2;   
-
+const int inputPin = 4;  
 int ledState = HIGH;         // the current state of the output pin
 int buttonState;             // the current reading from the input pin
 int lastButtonState = LOW;   // the previous reading from the input pin
@@ -50,8 +52,9 @@ int ledPin = 13;
 long smokeTime = 0;
 boolean buttonPressed = false;
 void setup() {
-    pinMode(buttonPin, INPUT);
+      pinMode(buttonPin,INPUT_PULLUP);
 pinMode (ledPin, OUTPUT);
+      pinMode(inputPin,INPUT);
 digitalWrite (ledPin, LOW);
  /**DMX MASTER CODE**/
    /* The most common pin for DMX output is pin 3, which DmxMaster
@@ -70,12 +73,13 @@ digitalWrite (ledPin, LOW);
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  establishContact();  // send a byte to establish contact until receiver responds
+ // establishContact();  // send a byte to establish contact until receiver responds
 }
 
 void loop() {
   // if we get a valid byte, read analog ins:
   buttonPressed = checkButton();
+ DEBUG(buttonPressed);
   if (!buttonPressed){
   if (Serial.available() > 0) {
     // get incoming byte:
@@ -89,37 +93,29 @@ void loop() {
       blue = blueIn;
       green = greenIn;
       smoke = smokeIn;
+    DEBUG("smoke intensity: ",smoke,"Red Brightness: ",red,"Blue Brightness: ",blue,"Green Brightness: ",green);
     DmxMaster.write(2, red);
-    Serial.print("Red Brightness: ");
-    Serial.println(red);
     DmxMaster.write(3, blue);
-    Serial.print("Blue Brightness: ");
-    Serial.println(blue);
     DmxMaster.write(4, green);
-    Serial.print("Green Brightness: ");
-    Serial.println(green);
     if (smokeON == true){
       if(smoke > 0){
     DmxMaster.write(1, 255);
-    Serial.println("machine still poofing");
+    DEBUG("machine still poofing",smokeON);
    // digitalWrite (ledPin, HIGH);
-    Serial.println(smokeON);
       }
       else{
     DmxMaster.write(1, 0);
-    Serial.println("machine stopped poofing");
+    DEBUG("machine stopped poofing",smokeON);
   //  digitalWrite (ledPin, LOW);
     smokeON = false;
-    Serial.println(smokeON);
       }
     }
    else {
       if (smoke > 0){
         DmxMaster.write(1, smoke);
-    Serial.println("machine On poofing");
+    DEBUG("machine On poofing", smokeON);
   //  digitalWrite (ledPin, HIGH);
     smokeON = true;
-    Serial.println(smokeON);
       }
     }
 
@@ -128,57 +124,78 @@ void loop() {
       digitalWrite (ledPin, LOW);
     }
   }
- // Serial.println(smokeON);
+ // DEBUG(smokeON);
   }
   else{
-        DmxMaster.write(2, RED_DEFAULT);
-    Serial.print("Red Brightness: ");
-    Serial.println(RED_DEFAULT);
+    DEBUG("smoke intensity: ",smoke,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
+    DmxMaster.write(2, RED_DEFAULT);
     DmxMaster.write(3, BLUE_DEFAULT);
-    Serial.print("Blue Brightness: ");
-    Serial.println(BLUE_DEFAULT);
     DmxMaster.write(4, GREEN_DEFAULT);
-    Serial.print("Green Brightness: ");
-    Serial.println(GREEN_DEFAULT);
   }
 }
-
+/*
 void establishContact() {
   while (Serial.available() <= 0) {
     Serial.print('A');   // send a capital A
     delay(300);
   }
 }
+*/
 bool checkButton() {
 int reading = digitalRead(buttonPin);
-
-  // check to see if you just pressed the button 
-  // (i.e. the input went from LOW to HIGH),  and you've waited 
-  // long enough since the last press to ignore any noise:  
-
-  // If the switch changed, due to noise or pressing:
-  if (reading != lastButtonState) {
-    // reset the debouncing timer
-    lastDebounceTime = millis();
-  } 
-  
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    // whatever the reading is at, it's been there for longer
-    // than the debounce delay, so take it as the actual current state:
-    buttonState = reading;
-  }
-  
-  // set the LED using the state of the button:
-
- 
-
-  // save the reading.  Next time through the loop,
-  // it'll be the lastButtonState:
-  lastButtonState = reading;
-   if(buttonState == HIGH){
+int teensyPin = digitalRead(inputPin);
+//
+//  // check to see if you just pressed the button 
+//  // (i.e. the input went from LOW to HIGH),  and you've waited 
+//  // long enough since the last press to ignore any noise:  
+//
+//  // If the switch changed, due to noise or pressing:
+//  if (reading != lastButtonState) {
+//    // reset the debouncing timer
+//    lastDebounceTime = millis();
+//  } 
+//  
+//  if ((millis() - lastDebounceTime) > debounceDelay) {
+//    // whatever the reading is at, it's been there for longer
+//    // than the debounce delay, so take it as the actual current state:
+//    buttonState = reading;
+//    if (buttonState == HIGH){
+//          DmxMaster.write(2, 0);
+//    DEBUG("Red Brightness: ");
+//    DEBUG(0);
+//    DmxMaster.write(3, 0);
+//    DEBUG("Blue Brightness: ");
+//    DEBUGln(0);
+//    DmxMaster.write(4, 0);
+//    DEBUG("Green Brightness: ");
+//    DEBUGln(0);
+//    DmxMaster.write(1, 0);
+//    DEBUGln("machine stopped poofing");
+//  //  digitalWrite (ledPin, LOW);
+//    }
+//  }
+//  
+//  // set the LED using the state of the button:
+//
+// 
+//
+//  // save the reading.  Next time through the loop,
+//  // it'll be the lastButtonState:
+//  lastButtonState = reading;
+   if(reading == LOW){
     return true;
  }
+ else if(teensyPin == HIGH){
+     return true; 
+ }
  else{
+      DEBUG("smoke intensity: ",smoke,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
+    DmxMaster.write(2, 0);
+    DmxMaster.write(3, 0);
+    DmxMaster.write(4, 0);
+    DmxMaster.write(1, 0);
+    DEBUG("machine stopped poofing");
+  //  digitalWrite (ledPin, LOW);
   return false;
  }
   }
