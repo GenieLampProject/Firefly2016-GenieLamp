@@ -98,7 +98,7 @@ boolean buttonPressed = false;
 void setup() {
       pinMode(buttonPin,INPUT_PULLUP);
 pinMode (ledPin, OUTPUT);
-      pinMode(inputPin,INPUT_PULLUP);
+      pinMode(inputPin,INPUT);
 digitalWrite (ledPin, LOW);
  /**DMX MASTER CODE**/
    /* The most common pin for DMX output is pin 3, which DmxMaster
@@ -244,8 +244,8 @@ int teensyPin = digitalRead(inputPin);
     DEBUG("button active");
     return true;
  }
- else if(teensyPin == LOW){
-  DEBUG("teensy pin LOW");
+ else if(teensyPin == HIGH){
+  DEBUG("teensy pin HIGH");
      return true; 
  }
  else{

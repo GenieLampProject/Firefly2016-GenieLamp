@@ -16,7 +16,7 @@
 
 
 /*** BEGIN Testing Flags ***/
-#define SMOKE_SERIAL_MODE
+//#define SMOKE_SERIAL_MODE
 #define USE_CONFIGURABLE
 //#define JGF_DEBUG
 #define TEST_PIN 6
@@ -438,11 +438,11 @@ void Poofer::setup() {
 #ifdef JGF_DEBUG
     pinMode (TEST_PIN, OUTPUT);
     digitalWrite (TEST_PIN, LOW);
-#else
+#endif
     pinMode (SMOKE_PIN, OUTPUT);
     digitalWrite (SMOKE_PIN, HIGH);
-#endif
 }
+
 
 void Poofer::initialize() {
     this->pooferStartTime = 0;
@@ -451,6 +451,7 @@ void Poofer::initialize() {
     digitalWrite (this->SPARKER_PIN, LOW);
     digitalWrite (this->POOFER_PIN, LOW);
     digitalWrite (this->PILOT_PIN, LOW);
+    digitalWrite (SMOKE_PIN, HIGH);
 #ifdef JGF_DEBUG
     digitalWrite (TEST_PIN, LOW);
 #endif
@@ -475,6 +476,7 @@ void Poofer::off(long touchEnded) {
     //PILOT_END_MILLIS 3000//stop pilot solenoid
     digitalWrite(this->POOFER_PIN, LOW);
     digitalWrite(this->PILOT_PIN, LOW);
+    digitalWrite (SMOKE_PIN, HIGH);
 #ifdef JGF_DEBUG
     digitalWrite (TEST_PIN, LOW);
 #endif
@@ -752,6 +754,7 @@ void Poofer::display_NotToUse(long millis) {
         if (this->sparkerEvent) {
             this->poofComplete = true;
             digitalWrite (this->POOFER_PIN, LOW);
+            digitalWrite (SMOKE_PIN, HIGH);
             digitalWrite (this->PILOT_PIN, LOW);
             this->sparkerEvent = false;
         }
