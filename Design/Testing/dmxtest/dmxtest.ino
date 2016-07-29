@@ -68,7 +68,7 @@ RECEIVE_DATA_STRUCTURE mydata;
 /**END Testing Macros**/
 
 
-
+#define SMOKE_DEFAULT 255
 #define RED_DEFAULT 255
 #define GREEN_DEFAULT 69
 #define BLUE_DEFAULT 0
@@ -167,7 +167,8 @@ void loop() {
   }
   else{
     DEBUG("button was pressed");
-    DEBUG("smoke intensity: ",smoke,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
+    DEBUG("smoke intensity: ",SMOKE_DEFAULT,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
+    DmxMaster.write(1, SMOKE_DEFAULT);
     DmxMaster.write(2, RED_DEFAULT);
     DmxMaster.write(3, BLUE_DEFAULT);
     DmxMaster.write(4, GREEN_DEFAULT);
