@@ -685,7 +685,7 @@ void Poofer::display_NotToUse(long millis) {
         }
     } else {
 #ifdef JGF_DEBUG
-        digitalWrite (TEST_PIN, HIGH);
+        digitalWrite (TEST_PIN, LOW);
 #endif
         // Maybe move this into a method
         sparking = false;
@@ -709,8 +709,10 @@ void Poofer::display_NotToUse(long millis) {
     // Set the poofer output
     if (curr_script_point.poofer_on()) {
         digitalWrite (this->POOFER_PIN, HIGH);
+        digitalWrite (TEST_PIN, HIGH);
     } else {
         digitalWrite (this->POOFER_PIN, LOW);
+        digitalWrite (TEST_PIN, LOW);
     }
     // Set the smoke output; to put in Smoke::display()
     SMOKE_SERIAL.print(curr_script_point.curr_intensity());
