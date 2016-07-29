@@ -1,7 +1,7 @@
 // uncomment the following to disable serial debug statements
-//#define SERIAL_DEBUG false
-/**Uncomment below line to turn off Communication messages. **/
-//#define COMM false
+#define SERIAL_DEBUG false
+/**comment below line to turn off Communication messages. **/
+//#define COMM
 /*
 * Utility functions to help debugging running code.
 */
@@ -15,10 +15,11 @@
 
 
 /*** BEGIN Testing Flags ***/
-#define TEST_PIN 6
+#define SMOKE_SERIAL_MODE
 #define USE_CONFIGURABLE
 //#define JGF_DEBUG
-#define COMM
+#define TEST_PIN 6
+#define HELLO_PIN 13
 /*** FINISH Testing Flags ***/
 
 /*** BEGIN Macros ***/
@@ -30,6 +31,15 @@
 #define COMM_BEGIN(x)
 #define COMM_PRINT(x)
 #define COMM_PRINTLN(x)
+#endif
+
+//make smoke machine either triggered by digital pin 10, and talk over serial 3 or use serial 2 to trigger smoke and do not trigger with pin. (level shifter on pins 9,10)
+#ifdef SMOKE_SERIAL_MODE
+#define SMOKE_SERIAL Serial2
+#define SMOKE_PIN 7
+#else
+#define SMOKE_SERIAL Serial3
+#define SMOKE_PIN 10
 #endif
 
 // XXX QUESTION XXX Make runtime changeable?
@@ -50,9 +60,6 @@
 /*** BEGIN Constants ***/
 #define LED_TYPE        WS2812
 #define COLOR_ORDER     RGB
-
-#define SMOKE_SERIAL Serial2
-
 #define FRAMES_PER_SECOND  120
 /*** FINISH Constants ***/
 
@@ -416,6 +423,9 @@ void Poofer::setup() {
 #ifdef JGF_DEBUG
     pinMode (TEST_PIN, OUTPUT);
     digitalWrite (TEST_PIN, LOW);
+#else
+    pinMode (SMOKE_PIN, OUTPUT);
+    digitalWrite (SMOKE_PIN, HIGH);
 #endif
 }
 
@@ -465,10 +475,10 @@ void Poofer::off(long touchEnded) {
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
     SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.println(this->spoutGreen);
+    SMOKE_SERIAL.print(this->spoutGreen);
+    SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
-    delay(10);
     timer.stop(this->pooferEvent);
     this->pooferEvent = 0;
     this->OffDiff = millis() - touchEnded;
@@ -533,7 +543,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > LONG_POOF_OFF_MILLIS) {
@@ -550,7 +561,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > LONG_POOF_ON_MILLIS) {
@@ -568,7 +580,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > MED_POOF_OFF_MILLIS) {
@@ -585,7 +598,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > MED_POOF_ON_MILLIS) {
@@ -603,7 +617,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SHORT_POOF_OFF_MILLIS) {
@@ -620,7 +635,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SHORT_POOF_ON_MILLIS) {
@@ -638,7 +654,8 @@ void Poofer::display(long millis) {
             COMM_PRINT("printed Blue: ");
             COMM_PRINTLN(this->spoutBlue);
             SMOKE_SERIAL.print(",");
-            SMOKE_SERIAL.println(this->spoutGreen);
+            SMOKE_SERIAL.print(this->spoutGreen);
+            SMOKE_SERIAL.print('\n');
             COMM_PRINT("printed Green: ");
             COMM_PRINTLN(this->spoutGreen);
         } else if (this->myMillis > SPARK_START_MILLIS) {
@@ -713,10 +730,12 @@ void Poofer::display_NotToUse(long millis) {
     // Set the poofer output
     if (curr_script_point.poofer_on()) {
         digitalWrite (this->POOFER_PIN, HIGH);
-        digitalWrite (TEST_PIN, HIGH);
+        digitalWrite (SMOKE_PIN, LOW);
+        DEBUG("SmokePin should be LOW", digitalRead(SMOKE_PIN));
     } else {
         digitalWrite (this->POOFER_PIN, LOW);
-        digitalWrite (TEST_PIN, LOW);
+        digitalWrite (SMOKE_PIN, HIGH);
+        DEBUG("SmokePin should be HIGH", digitalRead(SMOKE_PIN));
     }
     // Set the smoke output; to put in Smoke::display()
     if (this->last_sent_smoke_signal > pooferMillis) {
@@ -737,7 +756,8 @@ void Poofer::display_NotToUse(long millis) {
         COMM_PRINT("printed Blue: ");
         COMM_PRINTLN(this->spoutBlue);
         SMOKE_SERIAL.print(",");
-        SMOKE_SERIAL.println(this->spoutGreen);
+        SMOKE_SERIAL.print(this->spoutGreen);
+        SMOKE_SERIAL.print('\n');
         COMM_PRINT("printed Green: ");
         COMM_PRINTLN(this->spoutGreen);
         delay(10);
@@ -780,7 +800,7 @@ void Poofer::poof(long duration) {          // NB: Unused
 /** BEGIN Smoke Modules Definitions ***/
 void Smoke::setup() {
         COMM_BEGIN(38400);
-        SMOKE_SERIAL.begin(38400);
+        SMOKE_SERIAL.begin(19200);
 }
 
 void Smoke::initialize() {
@@ -807,7 +827,8 @@ void Smoke::off(long touchEnded) {
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
     SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.println(this->spoutGreen);
+    SMOKE_SERIAL.print(this->spoutGreen);
+    SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
 }
@@ -826,7 +847,8 @@ void Smoke::display(long millis) {
     COMM_PRINT("printed Blue: ");
     COMM_PRINTLN(this->spoutBlue);
     SMOKE_SERIAL.print(",");
-    SMOKE_SERIAL.println(this->spoutGreen);
+    SMOKE_SERIAL.print(this->spoutGreen);
+    SMOKE_SERIAL.print('\n');
     COMM_PRINT("printed Green: ");
     COMM_PRINTLN(this->spoutGreen);
 }
@@ -925,6 +947,9 @@ BodyLEDs* bodyLEDs;
 
 /*** BEGIN Setup Routine ***/
 void setup() {
+  //write the onbard LED HIGH in order to show it is working
+  pinMode(HELLO_PIN,OUTPUT);
+  digitalWrite(HELLO_PIN, HIGH);
     touch = new Touch();
     poofer = new Poofer();
     smoke = new Smoke();

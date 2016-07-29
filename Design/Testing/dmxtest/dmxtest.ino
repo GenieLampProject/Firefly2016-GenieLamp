@@ -1,3 +1,5 @@
+#include <SoftwareSerial.h>
+
 /*
   Serial Call and Response
  Language: Wiring/Arduino
@@ -24,12 +26,14 @@
 
  */
 // uncomment the following to disable serial debug statements
-#define SERIAL_DEBUG false
+//#define SERIAL_DEBUG false
+
 #include <SerialDebug.h>
 #include <DmxMaster.h>
 #define RED_DEFAULT 255
 #define GREEN_DEFAULT 69
 #define BLUE_DEFAULT 0
+SoftwareSerial mySerial(10, 11); // RX, TX
 //button stuff//
 const int buttonPin = 2;   
 const int inputPin = 4;  
@@ -54,7 +58,7 @@ boolean buttonPressed = false;
 void setup() {
       pinMode(buttonPin,INPUT_PULLUP);
 pinMode (ledPin, OUTPUT);
-      pinMode(inputPin,INPUT);
+      pinMode(inputPin,INPUT_PULLUP);
 digitalWrite (ledPin, LOW);
  /**DMX MASTER CODE**/
    /* The most common pin for DMX output is pin 3, which DmxMaster
@@ -68,10 +72,11 @@ digitalWrite (ledPin, LOW);
 ** highest channel you DmxMaster.write() to. */
   DmxMaster.maxChannel(512);
  /**COMMUNICATIONS CODE**/
-  Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+
+  mySerial.begin(19200);
+  mySerial.setTimeout(1000);
+  Serial.begin(19200);
+  Serial.setTimeout(1000);
 
  // establishContact();  // send a byte to establish contact until receiver responds
 }
@@ -79,20 +84,31 @@ digitalWrite (ledPin, LOW);
 void loop() {
   // if we get a valid byte, read analog ins:
   buttonPressed = checkButton();
- DEBUG(buttonPressed);
-  if (!buttonPressed){
-  if (Serial.available() > 0) {
+ DEBUG("buttonPressed",buttonPressed);
+  if (buttonPressed == 0){
+  if (mySerial.available() > 0) {
+    DEBUG("Serial Available",mySerial.available());
     // get incoming byte:
-    int smokeIn = Serial.parseInt();
-    int redIn = Serial.parseInt();
-    int greenIn = Serial.parseInt();
-    int blueIn = Serial.parseInt();
-     if (Serial.read() == '\n') {
+    int smokeIn = mySerial.parseInt();
+    DEBUG("parse smoke");
+    int redIn = mySerial.parseInt();
+        DEBUG("parse red");
+    int greenIn = mySerial.parseInt();
+            DEBUG("parse green");
+    int blueIn = mySerial.parseInt();
+            DEBUG("parse blue");
+     if (mySerial.read() == '\n') {
       digitalWrite (ledPin, HIGH);
+      if (redIn == red && blueIn == blue && greenIn == green && smokeIn == smoke){
+      bool noChange = true;
+      DEBUG("no change");
+    }
+    else{
       red = redIn;
       blue = blueIn;
       green = greenIn;
       smoke = smokeIn;
+      DEBUG("change detected ");
     DEBUG("smoke intensity: ",smoke,"Red Brightness: ",red,"Blue Brightness: ",blue,"Green Brightness: ",green);
     DmxMaster.write(2, red);
     DmxMaster.write(3, blue);
@@ -104,7 +120,14 @@ void loop() {
    // digitalWrite (ledPin, HIGH);
       }
       else{
+      red = red-1;
+      blue = blue-1;
+      green = green-1;
+      smoke = smoke-1;
     DmxMaster.write(1, 0);
+    DmxMaster.write(2, 0);
+    DmxMaster.write(3, 0);
+    DmxMaster.write(3, 0);
     DEBUG("machine stopped poofing",smokeON);
   //  digitalWrite (ledPin, LOW);
     smokeON = false;
@@ -118,15 +141,19 @@ void loop() {
     smokeON = true;
       }
     }
-
     }
+    }// this
     else{
       digitalWrite (ledPin, LOW);
     }
   }
+  else {
+    DEBUG("serial not available");
+  }
  // DEBUG(smokeON);
   }
   else{
+    DEBUG("button was pressed");
     DEBUG("smoke intensity: ",smoke,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
     DmxMaster.write(2, RED_DEFAULT);
     DmxMaster.write(3, BLUE_DEFAULT);
@@ -135,9 +162,26 @@ void loop() {
 }
 /*
 void establishContact() {
-  while (Serial.available() <= 0) {
-    Serial.print('A');   // send a capital A
+  while (mySerial.available() <= 0) {
+    mySerial.print('A');   // send a capital A
     delay(300);
+  }
+}
+*/
+
+
+/*//serial event def
+void serialEvent() {
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // add it to the inputString:
+    inputString += inChar;
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if (inChar == '\n') {
+      stringComplete = true;
+    }
   }
 }
 */
@@ -183,13 +227,16 @@ int teensyPin = digitalRead(inputPin);
 //  // it'll be the lastButtonState:
 //  lastButtonState = reading;
    if(reading == LOW){
+    DEBUG("button active");
     return true;
  }
- else if(teensyPin == HIGH){
+ else if(teensyPin == LOW){
+  DEBUG("teensy pin LOW");
      return true; 
  }
  else{
-      DEBUG("smoke intensity: ",smoke,"Red Brightness: ",RED_DEFAULT,"Blue Brightness: ",BLUE_DEFAULT,"Green Brightness: ",GREEN_DEFAULT);
+    DEBUG("button not active");
+    DEBUG("teensyPin",teensyPin,"smoke intensity: ",0,"Red Brightness: ",0,"Blue Brightness: ",0,"Green Brightness: ",0);
     DmxMaster.write(2, 0);
     DmxMaster.write(3, 0);
     DmxMaster.write(4, 0);
