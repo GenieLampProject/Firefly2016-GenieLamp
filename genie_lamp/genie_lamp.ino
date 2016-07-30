@@ -132,13 +132,13 @@ PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(8000, true, true, false, 0),
     PooferScriptPoint(10000, true, true, true, 122),
     PooferScriptPoint(10100, true, true, false, 0),
-    PooferScriptPoint(10500, true, true, true, 120),
-    PooferScriptPoint(10700, true, true, false, 0),
-    PooferScriptPoint(10900, true, true, true, 200),
-    PooferScriptPoint(11200, true, true, false, 0),
-    PooferScriptPoint(11400, true, true, true, 255),
-    PooferScriptPoint(13000, true, false, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
-    PooferScriptPoint(15000, false, false, false, 0)
+    PooferScriptPoint(10500+400, true, true, true, 120),
+    PooferScriptPoint(10700+400, true, true, false, 0),
+    PooferScriptPoint(10900+800, true, true, true, 200),
+    PooferScriptPoint(11200+1600, true, true, false, 0),
+    PooferScriptPoint(11400+3200, true, true, true, 255),
+    PooferScriptPoint(13000+6400, true, false, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
+    PooferScriptPoint(15000+12800, false, false, false, 0)
 };
 // UPDATEME WITH THE LENGTH OF THE SCRIPT ABOVE
 byte POOFER_SCRIPT_LEN = 12;
