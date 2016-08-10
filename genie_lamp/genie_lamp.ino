@@ -18,7 +18,7 @@
 /*** BEGIN Testing Flags ***/
 //#define SMOKE_SERIAL_MODE
 #define USE_CONFIGURABLE
-//#define JGF_DEBUG
+#define JGF_DEBUG
 #define TEST_PIN 6
 #define HELLO_PIN 13
 /*** FINISH Testing Flags ***/
@@ -128,17 +128,17 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
 // MUST update POOFER_SCRIPT_LEN when adding or removing script points
 PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(0, false, false, false, 0),
-    PooferScriptPoint(7500, true, false, false, 0),
-    PooferScriptPoint(8000, true, true, false, 0),
-    PooferScriptPoint(10000, true, true, true, 122),
-    PooferScriptPoint(10100, true, true, false, 0),
-    PooferScriptPoint(10500+400, true, true, true, 120),
-    PooferScriptPoint(10700+400, true, true, false, 0),
-    PooferScriptPoint(10900+800, true, true, true, 200),
-    PooferScriptPoint(11200+1600, true, true, false, 0),
-    PooferScriptPoint(11400+3200, true, true, true, 255),
-    PooferScriptPoint(13000+6400, true, false, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
-    PooferScriptPoint(15000+12800, false, false, false, 0)
+    PooferScriptPoint(3500, true, false, false, 0),
+    PooferScriptPoint(4000, true, true, false, 0),
+    PooferScriptPoint(6000, true, true, true, 122),
+    //PooferScriptPoint(10100, true, true, false, 0),
+    //PooferScriptPoint(10500, true, true, true, 120),
+    //PooferScriptPoint(10700, true, true, false, 0),
+    //PooferScriptPoint(10900, true, true, true, 200),
+    //PooferScriptPoint(11200, true, true, false, 0),
+    //PooferScriptPoint(11400, true, true, true, 255),
+    PooferScriptPoint(13000, true, true, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
+    PooferScriptPoint(15000, false, false, false, 0)
 };
 // UPDATEME WITH THE LENGTH OF THE SCRIPT ABOVE
 byte POOFER_SCRIPT_LEN = 12;
@@ -218,7 +218,7 @@ class Touch : public InputBase
 
         //// Runtime touch sensor data members
         int attempts = 0;
-        int tolerance = 300;
+        int tolerance = 600;
         int confidence = 0;
         int read1[Touch::pins];
         long firstRead[Touch::pins] = { 0 };
@@ -730,7 +730,11 @@ void Poofer::display_NotToUse(long millis) {
             curr_script_index++) {
         curr_script_point = pooferScript[curr_script_index];
     }
-    
+#ifdef JGF_DEBUG
+        if (millis > 0) {
+            digitalWrite (TEST_PIN, HIGH);
+        }
+#endif    
     //// Output the current script point
     // Set the sparker output
     if (curr_script_point.sparker_on()) {
@@ -744,7 +748,7 @@ void Poofer::display_NotToUse(long millis) {
         }
     } else {
 #ifdef JGF_DEBUG
-        digitalWrite (TEST_PIN, LOW);
+//        digitalWrite (TEST_PIN, HIGH);
 #endif
         // Maybe move this into a method
         sparking = false;
@@ -949,6 +953,7 @@ void BodyLEDs::display(long millis) {
         }
         FastLED.setBrightness(this->brightCal);
         //DEBUG(FastLED.show);
+        //FastLED.show;
         if (this->brightCal == 255) {
             return;
         }
@@ -1025,7 +1030,7 @@ void loop() {
     long touched_millis;
     while (true) {
         timer.update();
-
+        FastLED.show();
         touched_millis = touch->touched_time();
         if (!touched_millis) {
             //DEBUG("got to main if (nottouched)");
