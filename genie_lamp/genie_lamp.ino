@@ -11,7 +11,7 @@
 #include <SerialDebug.h>
 #include "Timer.h"
 #include "FastLED.h"
-#include <EasyTransfer.h>
+//#include <EasyTransfer.h>
 
 
 
@@ -79,7 +79,7 @@ long timeCalledEnd = 0;   // XXX TODO XXX Move to appropriate scope
 int8_t singleSparkEvent = 0;  // int8_t to match return Type of Timer.pulse()   // XXX TODO XXX Move to appropriate scope
 bool sparking = false;      // Safeguard for now
 //communication
-EasyTransfer ET; 
+//EasyTransfer ET; 
 
 /*** FINISH Globals ***/
 
@@ -128,17 +128,17 @@ struct PooferScriptPoint      // XXX JGF XXX TODO XXX Put this into the Poofer c
 // MUST update POOFER_SCRIPT_LEN when adding or removing script points
 PooferScriptPoint pooferScript[] = {
     PooferScriptPoint(0, false, false, false, 0),
-    PooferScriptPoint(3500, true, false, false, 0),
-    PooferScriptPoint(4000, true, true, false, 0),
-    PooferScriptPoint(6000, true, true, true, 122),
+    PooferScriptPoint(800, true, false, false, 0),
+    PooferScriptPoint(1300, true, true, false, 0),
+    PooferScriptPoint(2000, true, true, true, 122),
     //PooferScriptPoint(10100, true, true, false, 0),
     //PooferScriptPoint(10500, true, true, true, 120),
     //PooferScriptPoint(10700, true, true, false, 0),
     //PooferScriptPoint(10900, true, true, true, 200),
     //PooferScriptPoint(11200, true, true, false, 0),
     //PooferScriptPoint(11400, true, true, true, 255),
-    PooferScriptPoint(13000, true, true, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
-    PooferScriptPoint(15000, false, false, false, 0)
+    PooferScriptPoint(3000, true, true, false, 0),     // Leave sparker on for a short bit after the propane is off to make sure any excess propane is burned off
+    PooferScriptPoint(4000, false, false, false, 0)
 };
 // UPDATEME WITH THE LENGTH OF THE SCRIPT ABOVE
 byte POOFER_SCRIPT_LEN = 12;
@@ -784,31 +784,31 @@ void Poofer::display_NotToUse(long millis) {
     if (this->last_sent_smoke_signal > pooferMillis) {
         this->last_sent_smoke_signal = -1;
     }
-    if (this->last_sent_smoke_signal >=0 &&
-            (pooferMillis - this->last_sent_smoke_signal >= this->SMOKE_SIGNAL_FREQUENCY)) {
-        this->last_sent_smoke_signal = pooferMillis;
-        //SMOKE_SERIAL.print(curr_script_point.curr_intensity());
-        mydata.smokeSend = curr_script_point.curr_intensity();
-        COMM_PRINT("printed Poof: ");
-        COMM_PRINTLN(curr_script_point.curr_intensity());
-        //SMOKE_SERIAL.print(",");
-        //SMOKE_SERIAL.print(spoutRed);
-        mydata.redSend = spoutRed;
-        COMM_PRINT("printed Red: ");
-        COMM_PRINTLN(spoutRed);
-        //SMOKE_SERIAL.print(",");
-        //SMOKE_SERIAL.print(this->spoutBlue);
-        mydata.blueSend = this->spoutBlue;
-        COMM_PRINT("printed Blue: ");
-        COMM_PRINTLN(this->spoutBlue);
-        //SMOKE_SERIAL.print(",");
-        //SMOKE_SERIAL.print(this->spoutGreen);
-        mydata.greenSend = this->spoutGreen;
-        //SMOKE_SERIAL.print('\n');
-        COMM_PRINT("printed Green: ");
-        COMM_PRINTLN(this->spoutGreen);
-        ET.sendData();
-    }
+//    if (this->last_sent_smoke_signal >=0 &&
+//            (pooferMillis - this->last_sent_smoke_signal >= this->SMOKE_SIGNAL_FREQUENCY)) {
+//        this->last_sent_smoke_signal = pooferMillis;
+//        //SMOKE_SERIAL.print(curr_script_point.curr_intensity());
+//        mydata.smokeSend = curr_script_point.curr_intensity();
+//        COMM_PRINT("printed Poof: ");
+//        COMM_PRINTLN(curr_script_point.curr_intensity());
+//        //SMOKE_SERIAL.print(",");
+//        //SMOKE_SERIAL.print(spoutRed);
+//        mydata.redSend = spoutRed;
+//        COMM_PRINT("printed Red: ");
+//        COMM_PRINTLN(spoutRed);
+//        //SMOKE_SERIAL.print(",");
+//        //SMOKE_SERIAL.print(this->spoutBlue);
+//        mydata.blueSend = this->spoutBlue;
+//        COMM_PRINT("printed Blue: ");
+//        COMM_PRINTLN(this->spoutBlue);
+//        //SMOKE_SERIAL.print(",");
+//        //SMOKE_SERIAL.print(this->spoutGreen);
+//        mydata.greenSend = this->spoutGreen;
+//        //SMOKE_SERIAL.print('\n');
+//        COMM_PRINT("printed Green: ");
+//        COMM_PRINTLN(this->spoutGreen);
+//        ET.sendData();
+//    }
 }
 
 
@@ -997,8 +997,8 @@ BodyLEDs* bodyLEDs;
 
 /*** BEGIN Setup Routine ***/
 void setup() {
-   Serial2.begin(19200);
-   ET.begin(details(mydata), &Serial2);
+//   Serial2.begin(19200);
+//   ET.begin(details(mydata), &Serial2);
   //write the onbard LED HIGH in order to show it is working
   pinMode(HELLO_PIN,OUTPUT);
   digitalWrite(HELLO_PIN, HIGH);
